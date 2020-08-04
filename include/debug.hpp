@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #ifndef _INCLUDE_DEBUG_HPP_
 #define _INCLUDE_DEBUG_HPP_
 

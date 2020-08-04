@@ -20,12 +20,41 @@
 
 #include <cstdint>
 
+#include <deque>
 #include <string>
+
+#include "net/Socket.hpp"
 
 namespace server {
 
-bool login(std::string username, crypto::sha256Hash key_hash);
-bool signUp(std::string username, crypto::sha256Hash key_hash);
+using UserToken = uint64_t;
+
+class Server {
+public:
+    Server(uint16_t port);
+    ~Server() = default;
+
+    void run();
+
+private:
+    struct Client {
+        uint64_t userToken;
+        int64_t lastActiveTime;
+        net::Connection connection;
+    };
+
+    bool mRunning = false;
+    net::ServerSocket mServerSocket;
+    std::deque<Client> mLoggedClients;
+    std::deque<net::Connection> mUnloggedConnections;
+
+    bool login(UserToken token);
+
+    void listenForConnections();
+    void removeIdleClients();
+
+    int64_t now();
+};
 
 }  //namespace server
 

@@ -15,23 +15,67 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "crypto/Utils.hpp"
+#include <cstring>
+#include <ctime>
+
+#include <thread>
+
 #include "net/Socket.hpp"
+#include "utils/CryptoUtils.hpp"
+#include "utils/TextUtils.hpp"
 
 #include "Server.hpp"
 
 namespace server {
 
-bool login(std::string username, crypto::sha256Hash key_hash) {
-    return false;
+static const std::string DUMMY_USERNAME = "DUMMY";
+static const std::string DUMMY_PASSWORD = "DUMMYPASSWORD";
+
+static constexpr uint64_t CLIENT_MAX_IDLE_TIMEOUT = 60 * 5;
+
+Server::Server(uint16_t port)
+:   mServerSocket(net::Socket::Domain::IPv4, net::Socket::Type::STREAM, port)
+{
 }
 
-bool signUp(std::string username, crypto::sha256Hash key_hash) {
+void Server::run() {
+    mRunning = true;
+}
+
+int64_t Server::now() {
+    return std::chrono::duration_cast<std::chrono::seconds>(
+                std::chrono::system_clock::now()
+                                          .time_since_epoch())
+                                          .count();
+}
+
+void Server::listenForConnections() {
+    while(mRunning) {
+        net::Connection connection = mServerSocket.Accept();
+        mUnloggedConnections.push_back(connection);
+    }
+}
+
+void Server::removeIdleClients() {
+    for (auto client = mLoggedClients.begin(); client < mLoggedClients.end(); client++) {
+        const int64_t idleTime = now() - client->lastActiveTime;
+        if (idleTime >= CLIENT_MAX_IDLE_TIMEOUT) {
+            mLoggedClients.erase(client);
+        }
+    }
+}
+
+bool Server::login(UserToken token) {
     return false;
 }
 
 }  // namespace server
 
+
 int main(int argc, char* argv[]) {
+    static constexpr uint16_t DEFAULT_SERVER_PORT = 3000;
+    server::Server server(DEFAULT_SERVER_PORT);
+    server.run();
+
     return 0;
 }

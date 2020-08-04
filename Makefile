@@ -17,7 +17,8 @@ init:
 
 SERVER_SRC = \
 	$(SRC)/net/Socket.cpp \
-	$(SRC)/crypto/Utils.cpp \
+	$(SRC)/utils/CryptoUtils.cpp \
+	$(SRC)/utils/TextUtils.cpp \
 	$(SRC)/Server.cpp
 
 SERVER_TARGET = Server
