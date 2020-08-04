@@ -16,22 +16,14 @@
 */
 
 #include "crypto/Utils.hpp"
-#include "net/Socket.hpp"
 
-#include "Server.hpp"
+namespace server::crypto {
 
-namespace server {
-
-bool login(std::string username, crypto::sha256Hash key_hash) {
-    return false;
+void sha256(std::string str, sha256Hash hash) {
+    SHA256_CTX sha256;
+    SHA256_Init(&sha256);
+    SHA256_Update(&sha256, str.c_str(), str.size());
+    SHA256_Final(hash, &sha256);
 }
 
-bool signUp(std::string username, crypto::sha256Hash key_hash) {
-    return false;
-}
-
-}  // namespace server
-
-int main(int argc, char* argv[]) {
-    return 0;
-}
+}  // namespace server::crypto

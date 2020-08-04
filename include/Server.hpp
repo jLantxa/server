@@ -15,23 +15,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "crypto/Utils.hpp"
-#include "net/Socket.hpp"
+#ifndef _INCLUDE_SERVER_HPP_
+#define _INCLUDE_SERVER_HPP_
 
-#include "Server.hpp"
+#include <cstdint>
+
+#include <string>
 
 namespace server {
 
-bool login(std::string username, crypto::sha256Hash key_hash) {
-    return false;
-}
+bool login(std::string username, crypto::sha256Hash key_hash);
+bool signUp(std::string username, crypto::sha256Hash key_hash);
 
-bool signUp(std::string username, crypto::sha256Hash key_hash) {
-    return false;
-}
+}  //namespace server
 
-}  // namespace server
-
-int main(int argc, char* argv[]) {
-    return 0;
-}
+#endif  // _INCLUDE_SERVER_HPP_

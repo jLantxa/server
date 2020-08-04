@@ -15,23 +15,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "crypto/Utils.hpp"
-#include "net/Socket.hpp"
+#ifndef _INCLUDE_CRYPTO_UTILS_HPP_
+#define _INCLUDE_CRYPTO_UTILS_HPP_
 
-#include "Server.hpp"
+#include <string>
 
-namespace server {
+#include "openssl/sha.h"
 
-bool login(std::string username, crypto::sha256Hash key_hash) {
-    return false;
-}
+namespace server::crypto {
 
-bool signUp(std::string username, crypto::sha256Hash key_hash) {
-    return false;
-}
+using sha256Hash = unsigned char[SHA256_DIGEST_LENGTH];
 
-}  // namespace server
+/** \brief Create a SHA256 from a std::string
+* \param str The source std::string.
+* \param hash An unsigned char[32] to write the hash.
+*/
+void sha256(std::string str, sha256Hash hash);
 
-int main(int argc, char* argv[]) {
-    return 0;
-}
+}  // namespace server::crypto
+
+#endif  // _INCLUDE_CRYPTO_UTILS_HPP_
