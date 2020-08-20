@@ -22,38 +22,48 @@
 
 #include <deque>
 #include <string>
+#include <vector>
 
+#include "Database.hpp"
 #include "net/Socket.hpp"
 
 namespace server {
 
-using UserToken = uint64_t;
+constexpr uint16_t NOTIFICATION_SERVER_PORT = 3000;
 
 class Server {
 public:
     Server(uint16_t port);
-    ~Server() = default;
+    virtual ~Server() = default;
 
-    void run();
+    void start();
 
-private:
-    struct Client {
-        uint64_t userToken;
+protected:
+    struct Client final {
         int64_t lastActiveTime;
         net::Connection connection;
     };
 
+    struct User final {
+        UserToken token;
+        std::vector<Client> clients;
+    };
+
     bool mRunning = false;
     net::ServerSocket mServerSocket;
-    std::deque<Client> mLoggedClients;
-    std::deque<net::Connection> mUnloggedConnections;
+    std::vector<User> mUsers;
+    std::deque<Client> mUnloggedConnections;
 
-    bool login(UserToken token);
+    virtual void run() = 0;
 
+    bool login(UserToken token, Client& client);
     void listenForConnections();
     void removeIdleClients();
 
     int64_t now();
+
+private:
+    void loopRemoveIdleClients();
 };
 
 }  //namespace server

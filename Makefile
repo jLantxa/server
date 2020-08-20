@@ -15,20 +15,23 @@ init:
 	@mkdir -p $(BUILD)
 
 
-SERVER_SRC = \
+NOTIFICATION_SERVER_SRC = \
+	$(SRC)/Database.cpp \
 	$(SRC)/net/Socket.cpp \
 	$(SRC)/utils/CryptoUtils.cpp \
 	$(SRC)/utils/TextUtils.cpp \
-	$(SRC)/Server.cpp
+	$(SRC)/Server.cpp \
+	$(SRC)/NotificationServer/NotificationServer.cpp
 
-SERVER_TARGET = Server
 
-server:
+NOTIFICATION_SERVER_TARGET = NotificationServer
+
+notification:
 	$(CXX) $(CXX_FLAGS) \
 		-I $(INCLUDE) \
-		$(SERVER_SRC) \
+		$(NOTIFICATION_SERVER_SRC) \
 		$(LD_FLAGS) \
-	-o $(BUILD)/$(SERVER_TARGET)
+	-o $(BUILD)/$(NOTIFICATION_SERVER_TARGET)
 
 
 clean:

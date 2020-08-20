@@ -27,7 +27,8 @@ LOG_TAG("net::Socket");
 
 namespace server::net {
 
-Connection::Connection(int newSockfd): m_sockfd(newSockfd) {}
+Connection::Connection(int sockfd) : m_sockfd(sockfd) {
+}
 
 void Connection::Send(uint8_t* buffer, std::size_t len) {
     send(m_sockfd, buffer, len, 0);

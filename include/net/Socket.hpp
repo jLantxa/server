@@ -30,9 +30,8 @@ namespace server::net {
 class Connection {
 public:
     Connection() = default;
-    Connection(int newSockfd);
-
-    ~Connection() = default;
+    Connection(int sockfd);
+    virtual ~Connection() = default;
 
     /** \brief Send a buffer of bytes
     * \param buffer A pointer to a buffer of uint8_t.
@@ -48,7 +47,7 @@ public:
     virtual std::size_t Read(uint8_t* buffer, std::size_t len);
 
 protected:
-    int m_sockfd = -1;
+    int m_sockfd;
 };
 
 
