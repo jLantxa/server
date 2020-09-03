@@ -25,23 +25,22 @@ LOG_TAG("NotificationServer");
 namespace server {
 
 NotificationServer::NotificationServer() : Server(NOTIFICATION_SERVER_PORT) {
+
 }
 
-void NotificationServer::run() {
-    Debug::Log::d(LOG_TAG, "%s()", __func__);
+void NotificationServer::onLogin(Client& client) {
 
-    while (mRunning) {
+}
 
-    }
+void NotificationServer::onMessageReceived(Client& client, uint8_t* buffer) {
 
-    Debug::Log::d(LOG_TAG, "%s() exit", __func__);
 }
 
 }  // namespace server
 
 int main(int argc, char* argv[]) {
     server::NotificationServer server;
-    server.start();
+    server.run();
 
     return 0;
 }

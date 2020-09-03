@@ -36,7 +36,7 @@ LOG_TAG("Server");
 
 namespace server {
 
-static const auto REMOVE_IDLE_RATE = std::chrono::seconds(2);
+static constexpr auto REMOVE_IDLE_RATE = std::chrono::seconds(300);
 static constexpr uint64_t CLIENT_MAX_IDLE_TIMEOUT = 10;
 
 Server::Server(uint16_t port)
@@ -45,17 +45,15 @@ Server::Server(uint16_t port)
     Debug::Log::i(LOG_TAG, "Created server at port %d", port);
 }
 
-void Server::start() {
+void Server::run() {
     mRunning = true;
+    Debug::Log::i(LOG_TAG, "Running server");
 
     std::thread acceptConnectionsThread(&Server::listenForConnections, this);
     acceptConnectionsThread.detach();
 
     std::thread removeIdleClientsThread(&Server::loopRemoveIdleClients, this);
     removeIdleClientsThread.detach();
-
-    Debug::Log::i(LOG_TAG, "Running server");
-    run();
 }
 
 int64_t Server::now() {
@@ -124,6 +122,7 @@ bool Server::login(UserToken token, Client& client) {
     for (User user : mUsers) {
         if (user.token == token) {
             user.clients.emplace_back(client);
+            client.user = &user;
             Debug::Log::d(LOG_TAG, "User %d logged in with new client", token);
             return true;
         }
@@ -132,6 +131,7 @@ bool Server::login(UserToken token, Client& client) {
     User newUser;
     newUser.token = token;
     newUser.clients.emplace_back(client);
+    client.user = &newUser;
     Debug::Log::d(LOG_TAG, "New user %d logged in", token);
     return true;
 }

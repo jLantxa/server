@@ -27,8 +27,9 @@ public:
     NotificationServer();
     virtual ~NotificationServer() = default;
 
-protected:
-    void run() override;
+private:
+    void onLogin(Client& client) override;
+    void onMessageReceived(Client& client, uint8_t* buffer) override;
 
 };
 

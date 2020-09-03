@@ -36,12 +36,16 @@ public:
     Server(uint16_t port);
     virtual ~Server() = default;
 
-    void start();
+    void run();
 
 protected:
+    struct User;
+    struct Client;
+
     struct Client final {
         int64_t lastActiveTime;
         net::Connection connection;
+        User* user;
     };
 
     struct User final {
@@ -49,21 +53,23 @@ protected:
         std::vector<Client> clients;
     };
 
-    bool mRunning = false;
+    virtual void onLogin(Client& client) = 0;
+    virtual void onMessageReceived(Client& client, uint8_t* buffer) = 0;
+
+private:
+    volatile bool mRunning = false;
+
     net::ServerSocket mServerSocket;
     std::vector<User> mUsers;
     std::deque<Client> mUnloggedConnections;
 
-    virtual void run() = 0;
-
-    bool login(UserToken token, Client& client);
     void listenForConnections();
     void removeIdleClients();
+    void loopRemoveIdleClients();
+
+    bool login(UserToken token, Client& client);
 
     int64_t now();
-
-private:
-    void loopRemoveIdleClients();
 };
 
 }  //namespace server
