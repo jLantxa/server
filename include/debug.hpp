@@ -24,94 +24,42 @@
 
 namespace Debug
 {
-    enum DebugLevel : int {
-        NONE    = -1,
-        ERROR    = 0,
-        WARNING = 1,
-        INFO   = 2,
-        DEBUG   = 3,
-        VERBOSE = 4,
-    };
-
-    static inline const char* LevelTag(int level) {
-        switch (level) {
-            case ERROR:
-                return "E";
-            case WARNING:
-                return "W";
-            case INFO:
-                return "I";
-            case DEBUG:
-                return "D";
-            case VERBOSE:
-                return "V";
-
-            case NONE:
-            default:
-                return "U";
-        }
-    }
-
-    const static int DEFAULT_LEVEL = INFO;
-
-#if defined(NDEBUG) && NDEBUG !=0
-    static int defined_level = NONE;
+#ifdef DEBUG_LEVEL
+    static constexpr int defined_level = DEBUG_LEVEL;
 #else
-    #ifdef DEBUG_LEVEL
-        static int defined_level = DEBUG_LEVEL;
-    #else
-        static int defined_level = DEFAULT_LEVEL;
-    #endif
-
+    static constexpr int defined_level = 0;
 #endif
 
+
     template <typename... Args>
-    static void log(const int level, const char* tag, const char* str) {
-        if (level <= defined_level) {
-            printf("[%s] %s: ", LevelTag(level), tag);
-            printf("%s", str);
-            printf("\n");
-        }
+    static void log(const char* tag, const char* levelTag, const char* fmt, Args... args) {
+        printf("[%s] %s: ", levelTag, tag);
+        printf(fmt, args...);
+        printf("\n");
     }
 
     template <typename... Args>
-    static void log(const int level, const char* tag, const char* fmt, Args... args) {
-        if (level <= defined_level) {
-            printf("[%s] %s: ", LevelTag(level), tag);
-            printf(fmt, args...);
-            printf("\n");
-        }
+    static void log(const char* tag, const char* levelTag, const char* str) {
+        log(tag, "%s", str);
     }
+
+#define LOG_FUNCTION(name, level, level_tag) \
+        template <typename... Args> \
+            static inline void name(const char* tag, Args... args) { \
+                if constexpr (defined_level >= level) { \
+                    log(tag, level_tag, args...); \
+                } \
+            }
 
     // Visible debug functions
     class Log {
     public:
-        template <typename... Args>
-        static void e(const char* tag, Args... args) {
-            log(ERROR, tag, args...);
-        }
-
-        template <typename... Args>
-        static void w(const char* tag, Args... args) {
-            log(WARNING, tag, args...);
-        }
-
-        template <typename... Args>
-        static void i(const char* tag, Args... args) {
-            log(INFO, tag, args...);
-        }
-
-        template <typename... Args>
-        static void d(const char* tag, Args... args) {
-            log(DEBUG, tag, args...);
-        }
-
-        template <typename... Arg>
-        static void v(const char* tag, Arg... args) {
-            log(VERBOSE, tag, args...);
-        }
-
+        LOG_FUNCTION(e, -2, "ERROR");
+        LOG_FUNCTION(w, -1, "WARNING");
+        LOG_FUNCTION(i,  0, "INFO");
+        LOG_FUNCTION(d,  1, "DEBUG");
+        LOG_FUNCTION(v,  2, "VERBOSE");
     };
 }
 
-#endif  // _JLANTXA_INCLUDE_DEBUG_HPP_
+#endif  // _INCLUDE_DEBUG_HPP_

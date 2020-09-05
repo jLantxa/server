@@ -10,6 +10,7 @@ CXX_FLAGS := \
 
 LD_FLAGS := -pthread -lcrypto
 
+DEFINES := -DDEBUG_LEVEL=0
 
 init:
 	@mkdir -p $(BUILD)
@@ -31,6 +32,7 @@ notification:
 		-I $(INCLUDE) \
 		$(NOTIFICATION_SERVER_SRC) \
 		$(LD_FLAGS) \
+		$(DEFINES) \
 	-o $(BUILD)/$(NOTIFICATION_SERVER_TARGET)
 
 
