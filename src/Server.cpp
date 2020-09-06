@@ -113,10 +113,9 @@ void Server::loopRemoveIdleClients() {
 
 bool Server::login(const UserToken token, Client& client) {
     Debug::Log::i(LOG_TAG, "Login attempt with token %d", token);
-    Database& database = Database::getInstance();
 
-    if (!database.userTokenExists(token)) {
-        Debug::Log::d(LOG_TAG, "User token %d does not exist", token);
+    if (!authenticate(token)) {
+        Debug::Log::d(LOG_TAG, "User token %d not registered in this server", token);
         return false;
     }
 

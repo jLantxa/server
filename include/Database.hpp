@@ -24,15 +24,11 @@ namespace server {
 
 using UserToken = uint64_t;
 
-class Database final {
+class Database {
 public:
-    static Database& getInstance();
-
-    bool userTokenExists(UserToken token);
-
-private:
-    Database() = default;
-
+    virtual bool authenticateUserToken(const UserToken token) = 0;
+    virtual void addUser(const UserToken token) = 0;
+    virtual void deleteUser(const UserToken token) = 0;
 };
 
 }  // namespace server

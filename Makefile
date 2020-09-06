@@ -34,8 +34,8 @@ doxygen:
 
 
 NOTIFICATION_SERVER_SRC = \
-	$(SRC)/Database.cpp \
 	$(SRC)/net/Socket.cpp \
+	$(SRC)/Database.cpp \
 	$(SRC)/Server.cpp \
 	$(SRC)/NotificationServer/NotificationServer.cpp
 NOTIFICATION_SERVER_TARGET = NotificationServer

@@ -59,6 +59,7 @@ protected:
         User(const UserToken token) : token(token) { }
     };
 
+    virtual bool authenticate(const UserToken userToken) = 0;
     virtual void onLogin(Client& client) = 0;
     virtual void onMessageReceived(Client& client, const uint8_t *const buffer) = 0;
 

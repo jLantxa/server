@@ -28,6 +28,7 @@ public:
     virtual ~NotificationServer() = default;
 
 private:
+    bool authenticate(const UserToken token) override;
     void onLogin(Client& client) override;
     void onMessageReceived(Client& client, const uint8_t *const buffer) override;
 

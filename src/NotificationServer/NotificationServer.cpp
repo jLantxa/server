@@ -29,6 +29,12 @@ NotificationServer::NotificationServer(const uint16_t port) : Server(port) {
 
 }
 
+bool NotificationServer::authenticate(const UserToken token) {
+    // TODO
+    (void) token;
+    return false;
+}
+
 void NotificationServer::onLogin(Client& client) {
     // TODO
     (void) client;
