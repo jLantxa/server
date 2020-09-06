@@ -19,8 +19,6 @@ init:
 NOTIFICATION_SERVER_SRC = \
 	$(SRC)/Database.cpp \
 	$(SRC)/net/Socket.cpp \
-	$(SRC)/utils/CryptoUtils.cpp \
-	$(SRC)/utils/TextUtils.cpp \
 	$(SRC)/Server.cpp \
 	$(SRC)/NotificationServer/NotificationServer.cpp
 
