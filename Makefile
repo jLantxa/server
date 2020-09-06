@@ -29,6 +29,9 @@ clean:
 	@rm -rf $(DOC)
 	@make init
 
+doxygen:
+	doxygen
+
 
 NOTIFICATION_SERVER_SRC = \
 	$(SRC)/Database.cpp \
