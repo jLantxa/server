@@ -69,7 +69,7 @@ void Server::listenForConnections() {
 
     while (mRunning) {
         net::Connection connection = mServerSocket.Accept();
-        mUnloggedConnections.emplace_back(Client{now(), connection});
+        mUnloggedConnections.emplace_back(connection);
         Debug::Log::i(LOG_TAG, "New unlogged connection");
     }
 }
@@ -110,7 +110,7 @@ void Server::loopRemoveIdleClients() {
     }
 }
 
-bool Server::login(UserToken token, Client& client) {
+bool Server::login(const UserToken token, Client& client) {
     Debug::Log::d(LOG_TAG, "Login attempt with token %d", token);
     Database& database = Database::getInstance();
 
@@ -128,8 +128,7 @@ bool Server::login(UserToken token, Client& client) {
         }
     }
 
-    User newUser;
-    newUser.token = token;
+    User newUser(token);
     newUser.clients.emplace_back(client);
     client.user = &newUser;
     Debug::Log::d(LOG_TAG, "New user %d logged in", token);

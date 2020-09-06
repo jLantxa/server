@@ -29,7 +29,7 @@ public:
 
 private:
     void onLogin(Client& client) override;
-    void onMessageReceived(Client& client, uint8_t* buffer) override;
+    void onMessageReceived(Client& client, const uint8_t *const buffer) override;
 
 };
 

@@ -32,7 +32,7 @@ void NotificationServer::onLogin(Client& client) {
 
 }
 
-void NotificationServer::onMessageReceived(Client& client, uint8_t* buffer) {
+void NotificationServer::onMessageReceived(Client& client, const uint8_t *const buffer) {
 
 }
 

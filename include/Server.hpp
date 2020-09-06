@@ -43,18 +43,26 @@ protected:
     struct Client;
 
     struct Client final {
-        int64_t lastActiveTime;
         net::Connection connection;
-        User* user;
+        int64_t lastActiveTime = now();
+        User* user = nullptr;
+
+        Client(const net::Connection connection, User* user)
+        :   connection(connection), user(user) { }
+
+        Client(const net::Connection connection)
+        :   connection(connection) { }
     };
 
     struct User final {
         UserToken token;
         std::vector<Client> clients;
+
+        User(const UserToken) : token(token) { }
     };
 
     virtual void onLogin(Client& client) = 0;
-    virtual void onMessageReceived(Client& client, uint8_t* buffer) = 0;
+    virtual void onMessageReceived(Client& client, const uint8_t *const buffer) = 0;
 
 private:
     volatile bool mRunning = false;
@@ -67,9 +75,9 @@ private:
     void removeIdleClients();
     void loopRemoveIdleClients();
 
-    bool login(UserToken token, Client& client);
+    bool login(const UserToken token, Client& client);
 
-    int64_t now();
+    static int64_t now();
 };
 
 }  //namespace server
