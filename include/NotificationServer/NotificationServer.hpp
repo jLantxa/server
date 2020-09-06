@@ -22,6 +22,10 @@
 
 namespace server {
 
+/**
+ * \brief Notification server.
+ *        This server sends scheduled notifications to registered clients.
+*/
 class NotificationServer : public Server {
 public:
     NotificationServer(const uint16_t port);

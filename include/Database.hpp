@@ -24,10 +24,27 @@ namespace server {
 
 using UserToken = uint64_t;
 
+/**
+ * \brief Base class for a database handler.
+ */
 class Database {
 public:
+    /**
+     * \brief Check if a user token exists in the user database.
+     * \return true if the token is registered in the database, false otherwise.
+     */
     virtual bool authenticateUserToken(const UserToken token) = 0;
+
+    /**
+     * \brief Add a user to the database. Ignore if the user already exists.
+     * \param token User token to be added.
+     */
     virtual void addUser(const UserToken token) = 0;
+
+    /**
+     * \brief Delete user from the database. Ignore if the user does not exist in the database.
+     * \param token User token to be deleted.
+     */
     virtual void deleteUser(const UserToken token) = 0;
 };
 

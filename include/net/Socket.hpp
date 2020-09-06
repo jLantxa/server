@@ -25,8 +25,12 @@
 #include <string>
 #include <vector>
 
+/** Networking classes and utilities */
 namespace server::net {
 
+/**
+ * \brief An established connection with a socket
+ */
 class Connection {
 public:
     Connection() = default;
@@ -65,6 +69,7 @@ protected:
     const char* m_msg;
 };
 
+/** \brief Base server socket class */
 class Socket : public Connection {
 public:
     enum class Domain : int {

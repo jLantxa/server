@@ -18,7 +18,7 @@ LD_FLAGS := -pthread -lcrypto
 DEFINES := -DDEBUG_LEVEL=0
 
 
-all: init notification
+all: init doxygen notification
 
 
 init:
@@ -35,7 +35,6 @@ doxygen:
 
 NOTIFICATION_SERVER_SRC = \
 	$(SRC)/net/Socket.cpp \
-	$(SRC)/Database.cpp \
 	$(SRC)/Server.cpp \
 	$(SRC)/NotificationServer/NotificationServer.cpp
 NOTIFICATION_SERVER_TARGET = NotificationServer
