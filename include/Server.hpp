@@ -29,11 +29,9 @@
 
 namespace server {
 
-constexpr uint16_t NOTIFICATION_SERVER_PORT = 3000;
-
 class Server {
 public:
-    Server(uint16_t port);
+    Server(const uint16_t port);
     virtual ~Server() = default;
 
     void run();

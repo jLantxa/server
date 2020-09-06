@@ -24,7 +24,7 @@ namespace server {
 
 class NotificationServer : public Server {
 public:
-    NotificationServer();
+    NotificationServer(const uint16_t port);
     virtual ~NotificationServer() = default;
 
 private:

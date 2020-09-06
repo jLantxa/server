@@ -39,7 +39,7 @@ namespace server {
 static constexpr auto REMOVE_IDLE_RATE = std::chrono::seconds(300);
 static constexpr uint64_t CLIENT_MAX_IDLE_TIMEOUT = 10;
 
-Server::Server(uint16_t port)
+Server::Server(const uint16_t port)
 :   mServerSocket(net::Socket::Domain::IPv4, net::Socket::Type::STREAM, port)
 {
     Debug::Log::i(LOG_TAG, "Created server at port %d", port);
@@ -111,11 +111,11 @@ void Server::loopRemoveIdleClients() {
 }
 
 bool Server::login(const UserToken token, Client& client) {
-    Debug::Log::d(LOG_TAG, "Login attempt with token %d", token);
+    Debug::Log::i(LOG_TAG, "Login attempt with token %d", token);
     Database& database = Database::getInstance();
 
     if (!database.userTokenExists(token)) {
-        Debug::Log::d(LOG_TAG, "Token %d does not exist", token);
+        Debug::Log::d(LOG_TAG, "User token %d does not exist", token);
         return false;
     }
 
@@ -123,7 +123,7 @@ bool Server::login(const UserToken token, Client& client) {
         if (user.token == token) {
             user.clients.emplace_back(client);
             client.user = &user;
-            Debug::Log::d(LOG_TAG, "User %d logged in with new client", token);
+            Debug::Log::i(LOG_TAG, "User %d logged in with new client", token);
             return true;
         }
     }
@@ -131,7 +131,7 @@ bool Server::login(const UserToken token, Client& client) {
     User newUser(token);
     newUser.clients.emplace_back(client);
     client.user = &newUser;
-    Debug::Log::d(LOG_TAG, "New user %d logged in", token);
+    Debug::Log::i(LOG_TAG, "New user %d logged in", token);
     return true;
 }
 

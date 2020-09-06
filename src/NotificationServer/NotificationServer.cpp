@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <cstdlib>
 #include <cstdint>
 
 #include "debug.hpp"
@@ -24,7 +25,7 @@ LOG_TAG("NotificationServer");
 
 namespace server {
 
-NotificationServer::NotificationServer() : Server(NOTIFICATION_SERVER_PORT) {
+NotificationServer::NotificationServer(const uint16_t port) : Server(port) {
 
 }
 
@@ -39,7 +40,9 @@ void NotificationServer::onMessageReceived(Client& client, const uint8_t *const 
 }  // namespace server
 
 int main(int argc, char* argv[]) {
-    server::NotificationServer server;
+    const uint16_t port = (argc <= 1)? 3000 : atoi(argv[1]);
+
+    server::NotificationServer server(port);
     server.run();
 
     return 0;
