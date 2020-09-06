@@ -21,7 +21,7 @@
 #include "debug.hpp"
 #include "NotificationServer/NotificationServer.hpp"
 
-LOG_TAG("NotificationServer");
+static const char* LOG_TAG = "NotificationServer";
 
 namespace server {
 
@@ -30,20 +30,25 @@ NotificationServer::NotificationServer(const uint16_t port) : Server(port) {
 }
 
 void NotificationServer::onLogin(Client& client) {
-
+    // TODO
+    (void) client;
 }
 
 void NotificationServer::onMessageReceived(Client& client, const uint8_t *const buffer) {
-
+    // TODO
+    (void) client;
+    (void) buffer;
 }
 
 }  // namespace server
 
 int main(int argc, char* argv[]) {
-    const uint16_t port = (argc <= 1)? 3000 : atoi(argv[1]);
+    // Port numbers up to 1024 are reserved
+    uint16_t port = (argc <= 1)? 3000 : std::max(atoi(argv[1]), 1024 + 1);
 
     server::NotificationServer server(port);
     server.run();
 
+    Debug::Log::i(LOG_TAG, "Server shut down");
     return 0;
 }

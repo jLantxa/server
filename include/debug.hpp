@@ -20,8 +20,6 @@
 
 #include <cstdio>
 
-#define LOG_TAG(x) static const char* LOG_TAG = x
-
 namespace Debug
 {
 #ifdef DEBUG_LEVEL
@@ -40,7 +38,7 @@ namespace Debug
 
     template <typename... Args>
     static void log(const char* tag, const char* levelTag, const char* str) {
-        log(tag, "%s", str);
+        log(tag, levelTag, "%s", str);
     }
 
 #define LOG_FUNCTION(name, level, level_tag) \

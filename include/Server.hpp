@@ -42,7 +42,7 @@ protected:
 
     struct Client final {
         net::Connection connection;
-        int64_t lastActiveTime = now();
+        int64_t lastActiveTime = getCurrentTime();
         User* user = nullptr;
 
         Client(const net::Connection connection, User* user)
@@ -56,7 +56,7 @@ protected:
         UserToken token;
         std::vector<Client> clients;
 
-        User(const UserToken) : token(token) { }
+        User(const UserToken token) : token(token) { }
     };
 
     virtual void onLogin(Client& client) = 0;
@@ -75,7 +75,7 @@ private:
 
     bool login(const UserToken token, Client& client);
 
-    static int64_t now();
+    static int64_t getCurrentTime();
 };
 
 }  //namespace server

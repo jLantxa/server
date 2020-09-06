@@ -4,16 +4,30 @@ TEST	:= test
 BUILD  	:= build
 DOC		:= doc
 
+CXX := clang++
+
 CXX_FLAGS := \
 	-std=c++17 \
+	-Wall \
+	-Wextra \
+	-Werror \
 	-O3
 
 LD_FLAGS := -pthread -lcrypto
 
 DEFINES := -DDEBUG_LEVEL=0
 
+
+all: init notification
+
+
 init:
 	@mkdir -p $(BUILD)
+
+clean:
+	@rm -rf $(BUILD)
+	@rm -rf $(DOC)
+	@make init
 
 
 NOTIFICATION_SERVER_SRC = \
@@ -21,8 +35,6 @@ NOTIFICATION_SERVER_SRC = \
 	$(SRC)/net/Socket.cpp \
 	$(SRC)/Server.cpp \
 	$(SRC)/NotificationServer/NotificationServer.cpp
-
-
 NOTIFICATION_SERVER_TARGET = NotificationServer
 
 notification:
@@ -31,9 +43,4 @@ notification:
 		$(NOTIFICATION_SERVER_SRC) \
 		$(LD_FLAGS) \
 		$(DEFINES) \
-	-o $(BUILD)/$(NOTIFICATION_SERVER_TARGET)
-
-
-clean:
-	@rm -rf $(BUILD)
-	@rm -rf $(DOC)
+		-o $(BUILD)/$(NOTIFICATION_SERVER_TARGET)

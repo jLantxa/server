@@ -32,12 +32,12 @@
 
 #include "Server.hpp"
 
-LOG_TAG("Server");
+static const char* LOG_TAG = "Server";
 
 namespace server {
 
-static constexpr auto REMOVE_IDLE_RATE = std::chrono::seconds(300);
-static constexpr uint64_t CLIENT_MAX_IDLE_TIMEOUT = 10;
+static constexpr auto REMOVE_IDLE_RATE = std::chrono::seconds(30);
+static constexpr int32_t CLIENT_MAX_IDLE_TIMEOUT = 300;
 
 Server::Server(const uint16_t port)
 :   mServerSocket(net::Socket::Domain::IPv4, net::Socket::Type::STREAM, port)
@@ -56,7 +56,7 @@ void Server::run() {
     removeIdleClientsThread.detach();
 }
 
-int64_t Server::now() {
+int64_t Server::getCurrentTime() {
     return std::chrono::duration_cast<std::chrono::seconds>(
                 std::chrono::system_clock::now()
                                           .time_since_epoch())
@@ -75,10 +75,11 @@ void Server::listenForConnections() {
 }
 
 void Server::removeIdleClients() {
+    const int64_t now = getCurrentTime();
     for (auto user = mUsers.begin(); user != mUsers.end(); user++) {
         std::vector<Client>& userClients = user->clients;
         for (auto client = userClients.begin(); client < userClients.end(); client++) {
-            const int64_t idleTime = now() - client->lastActiveTime;
+            const int64_t idleTime = now - client->lastActiveTime;
             if (idleTime >= CLIENT_MAX_IDLE_TIMEOUT) {
                 userClients.erase(client);
                 client--;
@@ -94,7 +95,7 @@ void Server::removeIdleClients() {
     }
 
     for (auto client = mUnloggedConnections.begin(); client != mUnloggedConnections.end(); client++) {
-        const int64_t idleTime = now() - client->lastActiveTime;
+        const int64_t idleTime = now - client->lastActiveTime;
         if (idleTime >= CLIENT_MAX_IDLE_TIMEOUT) {
             mUnloggedConnections.erase(client);
             client--;

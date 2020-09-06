@@ -23,7 +23,7 @@
 #include "net/Socket.hpp"
 #include "debug.hpp"
 
-LOG_TAG("net::Socket");
+static const char* LOG_TAG = "net::Socket";
 
 namespace server::net {
 
