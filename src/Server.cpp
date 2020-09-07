@@ -36,8 +36,10 @@ static __attribute_used__ const char* LOG_TAG = "Server";
 
 namespace server {
 
-static constexpr auto REMOVE_IDLE_RATE = std::chrono::seconds(30);
+static constexpr auto REMOVE_IDLE_PERIOD = std::chrono::seconds(30);
 static constexpr int32_t CLIENT_MAX_IDLE_TIMEOUT = 300;
+
+static constexpr auto HANDLE_MESSAGES_PERIOD = std::chrono::milliseconds(100);
 
 Server::Server(const char* serverName, const uint16_t port)
 :   mServerName(serverName),
@@ -61,25 +63,42 @@ void Server::run() {
     mRunning = true;
     Debug::Log::i(LOG_TAG, "Running server");
 
-    std::thread acceptConnectionsThread(&Server::listenForConnections, this);
-    acceptConnectionsThread.detach();
-
-    std::thread removeIdleClientsThread(&Server::loopRemoveIdleClients, this);
-    removeIdleClientsThread.detach();
-}
-
-void Server::listenForConnections() {
-    Debug::Log::d(LOG_TAG, "%s()", __func__);
     mServerSocket.Listen();
 
-    while (mRunning) {
-        net::Connection connection = mServerSocket.Accept();
-        mUnloggedConnections.emplace_back(connection);
-        Debug::Log::i(LOG_TAG, "New unlogged connection");
-    }
+    std::thread listenForConnectionsThread([&]() {
+        Debug::Log::d(LOG_TAG, "Listening for new connections");
+        while (mRunning) {
+            // Accept is a blocking call so no need for a sleep
+            net::Connection connection = mServerSocket.Accept();
+            mUnloggedConnections.emplace_back(connection);
+            Debug::Log::i(LOG_TAG, "New unlogged connection");
+        }
+    });
+
+    std::thread removeIdleClientsThread([&]() {
+        while (mRunning) {
+            removeIdleClients();
+            std::this_thread::sleep_for(REMOVE_IDLE_PERIOD);
+        }
+    });
+    std::thread handleMessagesThread([&]() {
+        while (mRunning) {
+            handleMessages();
+            std::this_thread::sleep_for(HANDLE_MESSAGES_PERIOD);
+        }
+
+    });
+
+    listenForConnectionsThread.detach();
+    removeIdleClientsThread.detach();
+    handleMessagesThread.join();
+
+    Debug::Log::i(LOG_TAG, "Exit %s()", __func__);
 }
 
 void Server::removeIdleClients() {
+    Debug::Log::v(LOG_TAG, "Enter %s()", __func__);
+
     const int64_t now = getCurrentTime();
     for (auto user = mUsers.begin(); user != mUsers.end(); user++) {
         std::vector<Client>& userClients = user->clients;
@@ -111,12 +130,8 @@ void Server::removeIdleClients() {
     }
 }
 
-void Server::loopRemoveIdleClients() {
-    while (mRunning) {
-        Debug::Log::v(LOG_TAG, "Trigger %s()", __func__);
-        std::this_thread::sleep_for(REMOVE_IDLE_RATE);
-        removeIdleClients();
-    }
+void Server::handleMessages() {
+    Debug::Log::v(LOG_TAG, "Enter %s()", __func__);
 }
 
 bool Server::authenticate(const UserToken token) {

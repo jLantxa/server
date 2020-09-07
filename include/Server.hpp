@@ -93,11 +93,7 @@ private:
     std::vector<User> mUsers;
     std::deque<Client> mUnloggedConnections;
 
-    /**
-     * \brief Listen for incoming connections and accept clients. It adds new clients to
-     *        the mUnloggedConnections deque, waiting until they successfully log in to the server.
-     */
-    void listenForConnections();
+    void listenForMessages();
 
     /**
      * \brief Removes idle clients from the server.
@@ -107,9 +103,12 @@ private:
     void removeIdleClients();
 
     /**
-     * \brief Calls removeIdleClients periodically. This method is called in a separate thread.
+     * \brief Read incoming messages from logged and unlogged clients and handle them.
+     *        Messages coming from logged clients are relayed to the server implementation using
+     *        the onMessageReceived() interface.
+     *        Messages coming from unlogged clients are checked for login only.
      */
-    void loopRemoveIdleClients();
+    void handleMessages();
 
     /**
      * \brief Try to log in a user token. If the user token is sucessfully authenticated, the
