@@ -39,10 +39,22 @@ namespace server {
 static constexpr auto REMOVE_IDLE_RATE = std::chrono::seconds(30);
 static constexpr int32_t CLIENT_MAX_IDLE_TIMEOUT = 300;
 
-Server::Server(const uint16_t port)
-:   mServerSocket(net::Socket::Domain::IPv4, net::Socket::Type::STREAM, port)
+Server::Server(const char* serverName, const uint16_t port)
+:   mServerName(serverName),
+    mServerSocket(net::Socket::Domain::IPv4, net::Socket::Type::STREAM, port)
 {
     Debug::Log::i(LOG_TAG, "Created server at port %d", port);
+}
+
+int64_t Server::getCurrentTime() {
+    return std::chrono::duration_cast<std::chrono::seconds>(
+                std::chrono::system_clock::now()
+                                          .time_since_epoch())
+                                          .count();
+}
+
+const char* Server::getName() const {
+    return mServerName;
 }
 
 void Server::run() {
@@ -54,15 +66,6 @@ void Server::run() {
 
     std::thread removeIdleClientsThread(&Server::loopRemoveIdleClients, this);
     removeIdleClientsThread.detach();
-
-    while(mRunning);
-}
-
-int64_t Server::getCurrentTime() {
-    return std::chrono::duration_cast<std::chrono::seconds>(
-                std::chrono::system_clock::now()
-                                          .time_since_epoch())
-                                          .count();
 }
 
 void Server::listenForConnections() {
@@ -116,11 +119,27 @@ void Server::loopRemoveIdleClients() {
     }
 }
 
+bool Server::authenticate(const UserToken token) {
+    const Database& database = Database::getInstance();
+    const bool success = database.authenticateUserToken(token, mServerName);
+    if (success) {
+        Debug::Log::d(LOG_TAG,
+            "%s(): User %d successfully authenticated in server %s",
+            __func__, token, mServerName);
+    } else {
+        Debug::Log::d(LOG_TAG,
+            "%s(): Could not authenticate user %d in server %s",
+            __func__, token, mServerName);
+    }
+
+    return success;
+}
+
 bool Server::login(const UserToken token, Client& client) {
     Debug::Log::i(LOG_TAG, "Login attempt with token %d", token);
 
     if (!authenticate(token)) {
-        Debug::Log::d(LOG_TAG, "User token %d not registered in this server", token);
+        Debug::Log::i(LOG_TAG, "User token %d not registered in this server", token);
         return false;
     }
 

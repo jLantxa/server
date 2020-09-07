@@ -26,13 +26,12 @@ namespace server {
  * \brief Notification server.
  *        This server sends scheduled notifications to registered clients.
 */
-class NotificationServer : public Server {
+class NotificationServer final : public Server {
 public:
     NotificationServer(const uint16_t port);
     virtual ~NotificationServer() = default;
 
 private:
-    bool authenticate(const UserToken token) override;
     void onLogin(Client& client) override;
     void onMessageReceived(Client& client, const uint8_t *const buffer) override;
 

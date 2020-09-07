@@ -31,31 +31,23 @@ using UserToken = uint64_t;
  */
 class Database {
 public:
-    Database();
-    ~Database();
+    virtual ~Database();
+
+    static Database& getInstance();
 
     /**
      * \brief Check if a user token exists in the user database.
+     * \
      * \return true if the token is registered in the database, false otherwise.
      */
-    virtual bool authenticateUserToken(const UserToken token);
-
-    /**
-     * \brief Add a user to the database. Ignore if the user already exists.
-     * \param token User token to be added.
-     */
-    virtual void addUser(const UserToken token);
-
-    /**
-     * \brief Delete user from the database. Ignore if the user does not exist in the database.
-     * \param token User token to be deleted.
-     */
-    virtual void deleteUser(const UserToken token);
+    bool authenticateUserToken(const UserToken token, const char* serverName) const;
 
 protected:
     sqlite3* mDb;
 
 private:
+    Database();
+
     /**
      * \brief Create table of registered users
      */

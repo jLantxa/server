@@ -27,13 +27,6 @@ static __attribute_used__ const char* LOG_TAG = "Database";
 
 namespace server {
 
-static const char* SQL_CREATE_USER_TABLE =
-    "CREATE TABLE IF NOT EXISTS Users"
-    "("
-        "UserToken INT PRIMARY KEY NOT NULL,"
-        "Notification BOOL NOT NULL"
-    ");";
-
 Database::Database() {
    const int result = sqlite3_open("server.db", &mDb);
 
@@ -51,8 +44,21 @@ Database::~Database() {
     sqlite3_close(mDb);
 }
 
+Database& Database::getInstance() {
+    static Database database;
+    return database;
+}
+
+
 void Database::createUserTable() {
     Debug::Log::d(LOG_TAG, "%s()", __func__);
+
+    static const char* SQL_CREATE_USER_TABLE =
+    "CREATE TABLE IF NOT EXISTS Users ("
+        "Token INT PRIMARY KEY NOT NULL, "
+        "Name TEXT NOT NULL, "
+        "Notification INT NOT NULL"
+    ");";
 
     char *zErrMsg = 0;
     const int result = sqlite3_exec(mDb, SQL_CREATE_USER_TABLE, nullptr, nullptr, &zErrMsg);
@@ -60,23 +66,39 @@ void Database::createUserTable() {
     if(result != SQLITE_OK){
         Debug::Log::e(LOG_TAG, "%s(): SQL error: %s", __func__, zErrMsg);
         sqlite3_free(zErrMsg);
-   }
+    }
 }
 
-void Database::addUser(const UserToken token) {
-    // TODO
-    (void) token;
-}
+bool Database::authenticateUserToken(const UserToken token, const char* serverName) const {
+    Debug::Log::d(LOG_TAG, "%s()", __func__);
 
-void Database::deleteUser(const UserToken token) {
-    // TODO
-    (void) token;
-}
+    bool auth = false;
 
-bool Database::authenticateUserToken(const UserToken token) {
-    // TODO
-    (void) token;
-    return false;
+    char sql[256];
+    static const char* SQL_SELECT_USER =
+        "SELECT COUNT(*) FROM Users "
+        "WHERE Token = %d AND %s = 1;";
+
+    sprintf(sql, SQL_SELECT_USER, token, serverName);
+
+    const auto callback = [](void* auth, int argc, char** argv, char** azColName) -> int {
+        (void) argc;
+        (void) azColName;
+
+        const int count = atoi(argv[0]);
+        *((bool*) auth) = count > 0;
+        return 0;
+    };
+
+    char *zErrMsg = 0;
+    const int rc = sqlite3_exec(mDb, sql, callback, &auth, nullptr);
+    if (rc != SQLITE_OK) {
+        Debug::Log::e(LOG_TAG, "%s(): SQL error: %s", __func__, zErrMsg);
+        sqlite3_free(zErrMsg);
+        return false;
+    }
+
+    return auth;
 }
 
 }  // namespace server

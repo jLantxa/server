@@ -36,10 +36,11 @@ namespace server {
  */
 class Server {
 public:
-    Server(const uint16_t port);
+    Server(const char* serverName, const uint16_t port);
     virtual ~Server() = default;
 
     void run();
+    const char* getName() const;
 
 protected:
     struct User;
@@ -69,7 +70,7 @@ protected:
      * \param userToken User token.
      * \return true if this user token is registered in this server, false otherwise.
      */
-    virtual bool authenticate(const UserToken userToken) = 0;
+    bool authenticate(const UserToken userToken);
 
     /**
      * \brief Called when a user logs in.
@@ -85,6 +86,7 @@ protected:
     virtual void onMessageReceived(Client& client, const uint8_t *const buffer) = 0;
 
 private:
+    const char* mServerName;
     volatile bool mRunning = false;
 
     net::ServerSocket mServerSocket;

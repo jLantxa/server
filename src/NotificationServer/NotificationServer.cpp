@@ -22,17 +22,12 @@
 #include "NotificationServer/NotificationServer.hpp"
 
 static __attribute_used__ const char* LOG_TAG = "NotificationServer";
+static const char* SERVER_NAME = "Notification";
 
 namespace server {
 
-NotificationServer::NotificationServer(const uint16_t port) : Server(port) {
+NotificationServer::NotificationServer(const uint16_t port) : Server(SERVER_NAME, port) {
 
-}
-
-bool NotificationServer::authenticate(const UserToken token) {
-    // TODO
-    (void) token;
-    return false;
 }
 
 void NotificationServer::onLogin(Client& client) {
