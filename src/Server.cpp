@@ -125,49 +125,41 @@ void Server::removeIdleClients() {
     }
 }
 
-void Server::handleLogin(Client& client, const uint8_t *const buffer, BufferSize size) {
+void Server::handleLogin(Client& client, Message& message) {
+    const comm::MessageType type = message.header.type;
+    const uint16_t size = message.header.size;
 
-    /**
-     * || MessageType | UserToken ||
-     */
-
-    static constexpr BufferSize SIZE_OF_LOGIN_MSG = sizeof(comm::MessageType) + sizeof(UserToken);
-
-    if (size < SIZE_OF_LOGIN_MSG) {
-        Debug::Log::v(LOG_TAG, "%s(): size of message smaller than login", __func__);
+    if (type != comm::ServerMessageTypes::LOGIN){
+        Debug::Log::d(LOG_TAG, "%s(): Message type %d is not LOGIN", __func__, type);
+        return;
+    } else if (size != sizeof(UserToken)) {
+        Debug::Log::d(LOG_TAG, "%s(): LOGIN message contained invalid payload", __func__);
         return;
     }
 
-    const comm::MessageType* type = reinterpret_cast<const comm::MessageType*>(buffer);
-    if (*type != comm::ServerMessageTypes::LOGIN) {
-        Debug::Log::v(LOG_TAG, "%s(): received message type (%d) is not login", __func__, *type);
-        return;
-    }
-
-    const UserToken* token = reinterpret_cast<const UserToken*>(buffer + sizeof(comm::MessageType));
-    Debug::Log::v(LOG_TAG, "%s(): token = %d", __func__, *token);
+    const UserToken* token = reinterpret_cast<const UserToken*>(message.payload);
+    Debug::Log::d(LOG_TAG, "%s(): token %d", __func__, *token);
     login(*token, client);
 }
 
 void Server::pollMessages() {
     for (Client client : mUnloggedConnections) {
-        const BufferSize numBytes = client.connection.Read(mBuffer, BUFFER_SIZE);
+        const BufferSize numBytes = client.connection.Read(mMessageBuffer.buffer, Message::maxSize());
         if (numBytes > 0) {
             client.refreshTime();
-            handleLogin(client, mBuffer, numBytes);
+            handleLogin(client, mMessageBuffer.message);
         }
     }
 
     for (User user : mUsers) {
         for (Client& client : user.clients) {
-            const BufferSize numBytes = client.connection.Read(mBuffer, BUFFER_SIZE);
+            const BufferSize numBytes = client.connection.Read(mMessageBuffer.buffer, Message::maxSize());
             if (numBytes > 0) {
                 client.refreshTime();
-                onMessageReceived(client, mBuffer, numBytes);
+                onMessageReceived(client, mMessageBuffer.message);
             }
         }
     }
-
 }
 
 bool Server::authenticate(const UserToken token) {

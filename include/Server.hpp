@@ -24,11 +24,16 @@
 #include <string>
 #include <vector>
 
+#include <Communication.hpp>
 #include "Database.hpp"
 #include "net/Socket.hpp"
 
 /** Server classes */
 namespace server {
+
+static constexpr uint16_t BUFFER_SIZE = 1024;
+using MessageBuffer = comm::MessageBuffer<BUFFER_SIZE>;
+using Message = comm::Message<BUFFER_SIZE>;
 
 /**
  * \brief Basic server functionality like handling login requests, automatic logout of
@@ -95,15 +100,12 @@ protected:
      * \param client The client that sent the message.
      * \param buffer A buffer that contains the message.
      */
-    virtual void onMessageReceived(Client& client,
-                                   const uint8_t *const buffer,
-                                   const BufferSize size) = 0;
+    virtual void onMessageReceived(Client& client, const Message& message) = 0;
 
 private:
     static constexpr auto REMOVE_IDLE_PERIOD = std::chrono::seconds(30);
     static constexpr int32_t CLIENT_MAX_IDLE_TIMEOUT = 300;
     static constexpr auto HANDLE_MESSAGES_PERIOD = std::chrono::milliseconds(100);
-    static constexpr BufferSize BUFFER_SIZE = 1024;
 
     const char* mServerName;
     volatile bool mRunning = false;
@@ -112,7 +114,7 @@ private:
     std::vector<User> mUsers;
     std::vector<Client> mUnloggedConnections;
 
-    uint8_t mBuffer[BUFFER_SIZE];
+    MessageBuffer mMessageBuffer;
 
     /**
      * \brief Removes idle clients from the server.
@@ -135,7 +137,7 @@ private:
      * \param buffer The buffer received.
      * \param size Size of the buffer in bytes.
      */
-    void handleLogin(Client& client, const uint8_t *const buffer, BufferSize size);
+    void handleLogin(Client& client, Message& message);
 
     /**
      * \brief Try to log in a user token. If the user token is sucessfully authenticated, the

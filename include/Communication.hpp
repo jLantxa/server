@@ -25,13 +25,48 @@ namespace comm {
 
 using MessageType = uint16_t;
 
+/**
+ * \brief A message that can be sent to and from the server.
+ * This is the standard message format that must be used when communicating
+ * with the server, including logging in and sending messages to users in the
+ * chat.
+*/
+template <uint16_t length>
+class Message {
+public:
+    struct Header {
+        MessageType type;
+        uint16_t size;
+    };
+
+    Header header;
+    uint8_t payload[length - sizeof(Header)];
+
+    inline static constexpr std::size_t maxSize() {
+        return length;
+    }
+
+    inline static constexpr std::size_t maxPayloadSize() {
+        return (length - sizeof(Header));
+    }
+
+    inline uint16_t payloadSize() const {
+        return header.size;
+    }
+};
+
+template <uint16_t length> union MessageBuffer {
+    uint8_t buffer[length];
+    Message<length> message;
+};
+
 namespace ServerMessageTypes {
 
 enum : MessageType {
     LOGIN = 0,
 };
 
-} // namespace ServerMessageTypes
+}  // namespace ServerMessageTypes
 
 }  // namespace comm
 }  // namespace server

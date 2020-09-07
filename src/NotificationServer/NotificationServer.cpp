@@ -35,14 +35,10 @@ void NotificationServer::onLogin(Client& client) {
     (void) client;
 }
 
-void NotificationServer::onMessageReceived(Client& client,
-                                           const uint8_t *const buffer,
-                                           const BufferSize size)
-{
+void NotificationServer::onMessageReceived(Client& client, const Message& message) {
     // TODO
     (void) client;
-    (void) buffer;
-    (void) size;
+    (void) message;
 }
 
 }  // namespace server
