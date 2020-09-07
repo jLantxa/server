@@ -21,7 +21,7 @@
 #include "debug.hpp"
 #include "NotificationServer/NotificationServer.hpp"
 
-static const char* LOG_TAG = "NotificationServer";
+static __attribute_used__ const char* LOG_TAG = "NotificationServer";
 
 namespace server {
 

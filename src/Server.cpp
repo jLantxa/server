@@ -32,7 +32,7 @@
 
 #include "Server.hpp"
 
-static const char* LOG_TAG = "Server";
+static __attribute_used__ const char* LOG_TAG = "Server";
 
 namespace server {
 

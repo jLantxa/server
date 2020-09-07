@@ -22,10 +22,22 @@
 
 namespace TextUtils {
 
+/**
+ * \brief Checks if two std::strings are equal in value.
+ * \param str1 First string.
+ * \param str2 Second string.
+ * \return true if str1 and str2 are equal, false otherwise.
+ */
 bool Equals(const std::string& str1, const std::string& str2) {
     return (str1.compare(str2) == 0);
 }
 
+/**
+ * \brief Split a string by a delimiter substring
+ * \param str String
+ * \param delimiter Delimiter
+ * \return A vector with the split substrings.
+ */
 std::vector<std::string> Split(const std::string& str, const std::string& delimiter) {
     std::vector<std::string> str_vec;
     const std::size_t str_size = str.size();
