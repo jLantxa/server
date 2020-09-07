@@ -33,7 +33,9 @@ public:
 
 private:
     void onLogin(Client& client) override;
-    void onMessageReceived(Client& client, const uint8_t *const buffer) override;
+    void onMessageReceived(Client& client,
+                           const uint8_t *const buffer,
+                           const BufferSize size) override;
 
 };
 

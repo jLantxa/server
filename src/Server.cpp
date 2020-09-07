@@ -19,11 +19,11 @@
 #include <ctime>
 
 #include <chrono>
-#include <deque>
 #include <string>
 #include <thread>
 #include <vector>
 
+#include "Communication.hpp"
 #include "Database.hpp"
 #include "debug.hpp"
 #include "net/Socket.hpp"
@@ -35,11 +35,6 @@
 static __attribute_used__ const char* LOG_TAG = "Server";
 
 namespace server {
-
-static constexpr auto REMOVE_IDLE_PERIOD = std::chrono::seconds(30);
-static constexpr int32_t CLIENT_MAX_IDLE_TIMEOUT = 300;
-
-static constexpr auto HANDLE_MESSAGES_PERIOD = std::chrono::milliseconds(100);
 
 Server::Server(const char* serverName, const uint16_t port)
 :   mServerName(serverName),
@@ -81,12 +76,12 @@ void Server::run() {
             std::this_thread::sleep_for(REMOVE_IDLE_PERIOD);
         }
     });
+
     std::thread handleMessagesThread([&]() {
         while (mRunning) {
-            handleMessages();
+            pollMessages();
             std::this_thread::sleep_for(HANDLE_MESSAGES_PERIOD);
         }
-
     });
 
     listenForConnectionsThread.detach();
@@ -130,8 +125,49 @@ void Server::removeIdleClients() {
     }
 }
 
-void Server::handleMessages() {
-    Debug::Log::v(LOG_TAG, "Enter %s()", __func__);
+void Server::handleLogin(Client& client, const uint8_t *const buffer, BufferSize size) {
+
+    /**
+     * || MessageType | UserToken ||
+     */
+
+    static constexpr BufferSize SIZE_OF_LOGIN_MSG = sizeof(comm::MessageType) + sizeof(UserToken);
+
+    if (size < SIZE_OF_LOGIN_MSG) {
+        Debug::Log::v(LOG_TAG, "%s(): size of message smaller than login", __func__);
+        return;
+    }
+
+    const comm::MessageType* type = reinterpret_cast<const comm::MessageType*>(buffer);
+    if (*type != comm::ServerMessageTypes::LOGIN) {
+        Debug::Log::v(LOG_TAG, "%s(): received message type (%d) is not login", __func__, *type);
+        return;
+    }
+
+    const UserToken* token = reinterpret_cast<const UserToken*>(buffer + sizeof(comm::MessageType));
+    Debug::Log::v(LOG_TAG, "%s(): token = %d", __func__, *token);
+    login(*token, client);
+}
+
+void Server::pollMessages() {
+    for (Client client : mUnloggedConnections) {
+        const BufferSize numBytes = client.connection.Read(mBuffer, BUFFER_SIZE);
+        if (numBytes > 0) {
+            client.refreshTime();
+            handleLogin(client, mBuffer, numBytes);
+        }
+    }
+
+    for (User user : mUsers) {
+        for (Client& client : user.clients) {
+            const BufferSize numBytes = client.connection.Read(mBuffer, BUFFER_SIZE);
+            if (numBytes > 0) {
+                client.refreshTime();
+                onMessageReceived(client, mBuffer, numBytes);
+            }
+        }
+    }
+
 }
 
 bool Server::authenticate(const UserToken token) {
@@ -171,6 +207,8 @@ bool Server::login(const UserToken token, Client& client) {
     newUser.clients.emplace_back(client);
     client.user = &newUser;
     Debug::Log::i(LOG_TAG, "New user %d logged in", token);
+
+    onLogin(client);
     return true;
 }
 

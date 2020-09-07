@@ -23,20 +23,15 @@
 namespace server {
 namespace comm {
 
-enum Destination : uint32_t {
-    SERVER = 0,
-};
+using MessageType = uint16_t;
 
-enum ServerActions : uint32_t {
+namespace ServerMessageTypes {
+
+enum : MessageType {
     LOGIN = 0,
 };
 
-struct Message {
-    uint32_t destination;
-    uint32_t action;
-    uint16_t size;
-    uint8_t* payload;
-};
+} // namespace ServerMessageTypes
 
 }  // namespace comm
 }  // namespace server

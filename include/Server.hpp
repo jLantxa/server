@@ -20,7 +20,7 @@
 
 #include <cstdint>
 
-#include <deque>
+#include <chrono>
 #include <string>
 #include <vector>
 
@@ -43,19 +43,31 @@ public:
     const char* getName() const;
 
 protected:
+    using BufferSize = uint16_t;
+
     struct User;
     struct Client;
 
     struct Client final {
         net::Connection connection;
-        int64_t lastActiveTime = getCurrentTime();
+        int64_t lastActiveTime;
         User* user = nullptr;
 
         Client(const net::Connection connection, User* user)
-        :   connection(connection), user(user) { }
+        :   connection(connection), user(user)
+        {
+            refreshTime();
+        }
 
-        Client(const net::Connection connection)
-        :   connection(connection) { }
+        Client(const net::Connection connection) : Client(connection, nullptr) { }
+
+        void refreshTime() {
+            lastActiveTime = getCurrentTime();
+        }
+
+        bool isLogged() {
+            return (user != nullptr);
+        }
     };
 
     struct User final {
@@ -83,17 +95,24 @@ protected:
      * \param client The client that sent the message.
      * \param buffer A buffer that contains the message.
      */
-    virtual void onMessageReceived(Client& client, const uint8_t *const buffer) = 0;
+    virtual void onMessageReceived(Client& client,
+                                   const uint8_t *const buffer,
+                                   const BufferSize size) = 0;
 
 private:
+    static constexpr auto REMOVE_IDLE_PERIOD = std::chrono::seconds(30);
+    static constexpr int32_t CLIENT_MAX_IDLE_TIMEOUT = 300;
+    static constexpr auto HANDLE_MESSAGES_PERIOD = std::chrono::milliseconds(100);
+    static constexpr BufferSize BUFFER_SIZE = 1024;
+
     const char* mServerName;
     volatile bool mRunning = false;
 
     net::ServerSocket mServerSocket;
     std::vector<User> mUsers;
-    std::deque<Client> mUnloggedConnections;
+    std::vector<Client> mUnloggedConnections;
 
-    void listenForMessages();
+    uint8_t mBuffer[BUFFER_SIZE];
 
     /**
      * \brief Removes idle clients from the server.
@@ -108,7 +127,15 @@ private:
      *        the onMessageReceived() interface.
      *        Messages coming from unlogged clients are checked for login only.
      */
-    void handleMessages();
+    void pollMessages();
+
+    /**
+     * \brief Processes a received message as a login request. If the message is a
+     *        login request, attempt to log in.
+     * \param buffer The buffer received.
+     * \param size Size of the buffer in bytes.
+     */
+    void handleLogin(Client& client, const uint8_t *const buffer, BufferSize size);
 
     /**
      * \brief Try to log in a user token. If the user token is sucessfully authenticated, the
