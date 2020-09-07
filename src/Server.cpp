@@ -54,6 +54,8 @@ void Server::run() {
 
     std::thread removeIdleClientsThread(&Server::loopRemoveIdleClients, this);
     removeIdleClientsThread.detach();
+
+    while(mRunning);
 }
 
 int64_t Server::getCurrentTime() {
@@ -83,14 +85,16 @@ void Server::removeIdleClients() {
             if (idleTime >= CLIENT_MAX_IDLE_TIMEOUT) {
                 userClients.erase(client);
                 client--;
-                Debug::Log::i(LOG_TAG, "Client from user %d timed out", user->token);
+                Debug::Log::i(LOG_TAG,
+                    "Client from user %d timed out (%d s)", user->token, idleTime);
             }
         }
 
         if (userClients.size() == 0) {
             mUsers.erase(user);
             user--;
-            Debug::Log::i(LOG_TAG, "User %d timed out", user->token);
+            Debug::Log::i(LOG_TAG,
+                "User %d logged out (no logged in clients)", user->token);
         }
     }
 
@@ -99,13 +103,14 @@ void Server::removeIdleClients() {
         if (idleTime >= CLIENT_MAX_IDLE_TIMEOUT) {
             mUnloggedConnections.erase(client);
             client--;
-            Debug::Log::i(LOG_TAG, "Unlogged client timed out");
+            Debug::Log::i(LOG_TAG, "Unlogged client timed out (%d s)", idleTime);
         }
     }
 }
 
 void Server::loopRemoveIdleClients() {
     while (mRunning) {
+        Debug::Log::v(LOG_TAG, "Trigger %s()", __func__);
         std::this_thread::sleep_for(REMOVE_IDLE_RATE);
         removeIdleClients();
     }

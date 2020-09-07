@@ -20,6 +20,8 @@
 
 #include <cstdint>
 
+#include <sqlite3.h>
+
 namespace server {
 
 using UserToken = uint64_t;
@@ -29,23 +31,35 @@ using UserToken = uint64_t;
  */
 class Database {
 public:
+    Database();
+    ~Database();
+
     /**
      * \brief Check if a user token exists in the user database.
      * \return true if the token is registered in the database, false otherwise.
      */
-    virtual bool authenticateUserToken(const UserToken token) = 0;
+    virtual bool authenticateUserToken(const UserToken token);
 
     /**
      * \brief Add a user to the database. Ignore if the user already exists.
      * \param token User token to be added.
      */
-    virtual void addUser(const UserToken token) = 0;
+    virtual void addUser(const UserToken token);
 
     /**
      * \brief Delete user from the database. Ignore if the user does not exist in the database.
      * \param token User token to be deleted.
      */
-    virtual void deleteUser(const UserToken token) = 0;
+    virtual void deleteUser(const UserToken token);
+
+protected:
+    sqlite3* mDb;
+
+private:
+    /**
+     * \brief Create table of registered users
+     */
+    void createUserTable();
 };
 
 }  // namespace server

@@ -13,13 +13,15 @@ CXX_FLAGS := \
 	-Werror \
 	-O3
 
-LD_FLAGS := -pthread -lcrypto
+LD_FLAGS := -pthread -lcrypto -lsqlite3
 
-DEFINES := -DDEBUG_LEVEL=0
+DEFINES := -DDEBUG_LEVEL=100
 
 
-all: init doxygen notification
+all: init doxygen
+	@make -j servers
 
+servers: notification
 
 init:
 	@mkdir -p $(BUILD)
@@ -35,6 +37,7 @@ doxygen:
 
 NOTIFICATION_SERVER_SRC = \
 	$(SRC)/net/Socket.cpp \
+	$(SRC)/Database.cpp \
 	$(SRC)/Server.cpp \
 	$(SRC)/NotificationServer/NotificationServer.cpp
 NOTIFICATION_SERVER_TARGET = NotificationServer
