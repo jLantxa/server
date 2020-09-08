@@ -35,7 +35,7 @@ void NotificationServer::onLogin(Client& client) {
     (void) client;
 }
 
-void NotificationServer::onMessageReceived(Client& client, const Message& message) {
+void NotificationServer::onMessageReceived(Client& client, const comm::Message& message) {
     // TODO
     (void) client;
     (void) message;

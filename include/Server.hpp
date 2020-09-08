@@ -32,8 +32,6 @@
 namespace server {
 
 static constexpr uint16_t BUFFER_SIZE = 1024;
-using MessageBuffer = comm::MessageBuffer<BUFFER_SIZE>;
-using Message = comm::Message<BUFFER_SIZE>;
 
 /**
  * \brief Basic server functionality like handling login requests, automatic logout of
@@ -100,7 +98,7 @@ protected:
      * \param client The client that sent the message.
      * \param buffer A buffer that contains the message.
      */
-    virtual void onMessageReceived(Client& client, const Message& message) = 0;
+    virtual void onMessageReceived(Client& client, const comm::Message& message) = 0;
 
 private:
     static constexpr auto REMOVE_IDLE_PERIOD = std::chrono::seconds(30);
@@ -114,7 +112,7 @@ private:
     std::vector<User> mUsers;
     std::vector<Client> mUnloggedConnections;
 
-    MessageBuffer mMessageBuffer;
+    uint8_t mMessageBuffer[BUFFER_SIZE];
 
     /**
      * \brief Removes idle clients from the server.
@@ -137,7 +135,7 @@ private:
      * \param buffer The buffer received.
      * \param size Size of the buffer in bytes.
      */
-    void handleLogin(Client& client, Message& message);
+    void handleLogin(Client& client, const comm::Message& message, bool logged);
 
     /**
      * \brief Try to log in a user token. If the user token is sucessfully authenticated, the
@@ -146,7 +144,7 @@ private:
      * \param client The client that sent the login request.
      * \return true if the token was authenticated, false otherwise.
      */
-    bool login(const UserToken token, Client& client);
+    bool tryToLogin(const UserToken token, Client& client);
 
     /**
      * \brief Returns the current time.

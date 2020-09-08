@@ -41,14 +41,14 @@ public:
     * \param buffer A pointer to a buffer of uint8_t.
     * \param len The size of the buffer
     */
-    virtual void Send(uint8_t* buffer, std::size_t len);
+    virtual void Send(uint8_t* buffer, std::size_t len) const;
 
     /** \brief Read a buffer of bytes
     * \param buffer A pointer to a buffer of uint8_t to store the received data.
     * \param len The size of the buffer
     * \returns Number of bytes read.
     */
-    virtual std::size_t Read(uint8_t* buffer, std::size_t len);
+    virtual std::size_t Read(uint8_t* buffer, std::size_t len) const;
 
 protected:
     int m_sockfd;

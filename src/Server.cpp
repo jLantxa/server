@@ -125,9 +125,11 @@ void Server::removeIdleClients() {
     }
 }
 
-void Server::handleLogin(Client& client, Message& message) {
-    const comm::MessageType type = message.header.type;
-    const uint16_t size = message.header.size;
+void Server::handleLogin(Client& client, const comm::Message& message, bool logged) {
+    Debug::Log::v(LOG_TAG, "Enter %s()", __func__);
+
+    const comm::MessageType type = message.getType();
+    const uint16_t size = message.getPayloadSize();
 
     if (type != comm::ServerMessageTypes::LOGIN){
         Debug::Log::d(LOG_TAG, "%s(): Message type %d is not LOGIN", __func__, type);
@@ -137,26 +139,43 @@ void Server::handleLogin(Client& client, Message& message) {
         return;
     }
 
-    const UserToken* token = reinterpret_cast<const UserToken*>(message.payload);
+    const UserToken* token = reinterpret_cast<const UserToken* const >(message.getPayload());
     Debug::Log::d(LOG_TAG, "%s(): token %d", __func__, *token);
-    login(*token, client);
+
+    if (logged) {
+        // Send login response (already logged)
+        return;
+    }
+
+    tryToLogin(*token, client);
 }
 
 void Server::pollMessages() {
     for (Client client : mUnloggedConnections) {
-        const BufferSize numBytes = client.connection.Read(mMessageBuffer.buffer, Message::maxSize());
-        if (numBytes > 0) {
-            client.refreshTime();
-            handleLogin(client, mMessageBuffer.message);
+        const BufferSize numBytes = client.connection.Read(mMessageBuffer, BUFFER_SIZE);
+        if (numBytes == 0) {
+            continue;
+        }
+
+        client.refreshTime();
+        comm::Message msg(mMessageBuffer, numBytes);
+        if (msg.isValid()) {
+            handleLogin(client, msg, false);
         }
     }
 
     for (User user : mUsers) {
         for (Client& client : user.clients) {
-            const BufferSize numBytes = client.connection.Read(mMessageBuffer.buffer, Message::maxSize());
-            if (numBytes > 0) {
-                client.refreshTime();
-                onMessageReceived(client, mMessageBuffer.message);
+            const BufferSize numBytes = client.connection.Read(mMessageBuffer, BUFFER_SIZE);
+            if (numBytes == 0) {
+                continue;
+            }
+
+            client.refreshTime();
+            comm::Message msg(mMessageBuffer, numBytes);
+            if (msg.isValid()) {
+                handleLogin(client, msg, true);
+                onMessageReceived(client, msg);
             }
         }
     }
@@ -178,11 +197,12 @@ bool Server::authenticate(const UserToken token) {
     return success;
 }
 
-bool Server::login(const UserToken token, Client& client) {
+bool Server::tryToLogin(const UserToken token, Client& client) {
     Debug::Log::i(LOG_TAG, "Login attempt with token %d", token);
 
     if (!authenticate(token)) {
         Debug::Log::i(LOG_TAG, "User token %d not registered in this server", token);
+        // TODO: Send response (login error)
         return false;
     }
 
@@ -199,6 +219,8 @@ bool Server::login(const UserToken token, Client& client) {
     newUser.clients.emplace_back(client);
     client.user = &newUser;
     Debug::Log::i(LOG_TAG, "New user %d logged in", token);
+
+    // TODO: Send response (login success)
 
     onLogin(client);
     return true;

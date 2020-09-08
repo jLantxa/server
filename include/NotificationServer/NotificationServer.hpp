@@ -33,7 +33,7 @@ public:
 
 private:
     void onLogin(Client& client) override;
-    void onMessageReceived(Client& client, const Message& message) override;
+    void onMessageReceived(Client& client, const comm::Message& message) override;
 
 };
 

@@ -31,33 +31,38 @@ using MessageType = uint16_t;
  * with the server, including logging in and sending messages to users in the
  * chat.
 */
-template <uint16_t length>
 class Message {
 public:
+    Message(const uint8_t *const buffer, const uint16_t maxSize);
+    Message(MessageType type, const uint8_t *const buffer, const uint16_t size);
+
     struct Header {
         MessageType type;
-        uint16_t size;
+        uint8_t checksum;
+        uint16_t size = 0;
     };
 
-    Header header;
-    uint8_t payload[length - sizeof(Header)];
-
-    inline static constexpr std::size_t maxSize() {
-        return length;
+    inline MessageType getType() const {
+        return header.type;
     }
 
-    inline static constexpr std::size_t maxPayloadSize() {
-        return (length - sizeof(Header));
-    }
-
-    inline uint16_t payloadSize() const {
+    inline uint8_t getPayloadSize() const{
         return header.size;
     }
-};
 
-template <uint16_t length> union MessageBuffer {
-    uint8_t buffer[length];
-    Message<length> message;
+    inline const uint8_t* getPayload() const {
+        return payload;
+    }
+
+    bool isValid() const;
+
+private:
+    Header header;
+    const uint8_t* payload = nullptr;
+    bool validFlag = false;
+
+    uint8_t calculateChecksum() const;
+    bool isCheckSumOk() const;
 };
 
 namespace ServerMessageTypes {
