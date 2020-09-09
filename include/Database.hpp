@@ -24,7 +24,7 @@
 
 namespace server {
 
-using UserToken = uint64_t;
+using UserToken = char*;
 
 /**
  * \brief Base class for a database handler.

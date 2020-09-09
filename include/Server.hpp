@@ -96,7 +96,7 @@ protected:
     /**
      * \brief Called when a message is received.
      * \param client The client that sent the message.
-     * \param buffer A buffer that contains the message.
+     * \param message The received message.
      */
     virtual void onMessageReceived(Client& client, const comm::Message& message) = 0;
 

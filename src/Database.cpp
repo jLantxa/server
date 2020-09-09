@@ -55,7 +55,7 @@ void Database::createUserTable() {
 
     static const char* SQL_CREATE_USER_TABLE =
     "CREATE TABLE IF NOT EXISTS Users ("
-        "Token INT PRIMARY KEY NOT NULL, "
+        "Token TEXT PRIMARY KEY NOT NULL, "
         "Name TEXT NOT NULL, "
         "Notification INT NOT NULL"
     ");";
@@ -77,7 +77,7 @@ bool Database::authenticateUserToken(const UserToken token, const char* serverNa
     char sql[256];
     static const char* SQL_SELECT_USER =
         "SELECT COUNT(*) FROM Users "
-        "WHERE Token = %d AND %s = 1;";
+        "WHERE Token = %s AND %s = 1;";
 
     sprintf(sql, SQL_SELECT_USER, token, serverName);
 

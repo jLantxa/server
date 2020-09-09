@@ -15,10 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <numeric>
+
 #include "Communication.hpp"
 #include "debug.hpp"
 
-static const char* LOG_TAG = "Communication";
+static __attribute_used__ const char* LOG_TAG = "Communication";
 
 namespace server {
 namespace comm {
@@ -29,7 +31,7 @@ Message::Message(const uint8_t* const buffer, const uint16_t bufferSize) {
     static constexpr uint8_t typeOffset = 0;
     static constexpr uint8_t checksumOffset = typeOffset + sizeof(header.type);
     static constexpr uint8_t sizeOffset = checksumOffset + sizeof(header.checksum);
-    static constexpr uint8_t payloadOffset = sizeOffset + sizeof(header.size);
+    static constexpr uint8_t payloadOffset = sizeof(header);
 
     header.type = *(reinterpret_cast<const MessageType* const>(buffer + typeOffset));
     header.size = *(reinterpret_cast<const MessageType* const>(buffer + sizeOffset));
@@ -52,15 +54,23 @@ Message::Message(MessageType type, const uint8_t *const buffer, const uint16_t s
     header.type =  type;
     header.size = size;
     payload = buffer;
-    header.checksum = calculateChecksum();
+
+    if (header.size > (size - sizeof(header))) {
+        header.size = 0;
+        validFlag = false;
+        Debug::Log::w(LOG_TAG, "%s(): declared message size bigger than buffer", __func__);
+    } else {
+        header.checksum = calculateChecksum();
+        validFlag = isCheckSumOk();
+    }
+
+    Debug::Log::v(LOG_TAG, "%s(): type=%d, size=%d, valid=%d",
+        __func__, header.type, header.size, validFlag);
+
 }
 
 uint8_t Message::calculateChecksum() const {
-    uint8_t sum = header.type + header.size;
-    for (uint16_t i = 0; i < header.size; i++) {
-        sum += payload[i];
-    }
-
+    const uint8_t sum = std::accumulate(payload, payload + header.size, header.type + header.size);
     return (0xFF - sum);
 }
 

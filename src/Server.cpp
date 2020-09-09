@@ -103,7 +103,7 @@ void Server::removeIdleClients() {
                 userClients.erase(client);
                 client--;
                 Debug::Log::i(LOG_TAG,
-                    "Client from user %d timed out (%d s)", user->token, idleTime);
+                    "Client from user %s timed out (%d s)", user->token, idleTime);
             }
         }
 
@@ -111,7 +111,7 @@ void Server::removeIdleClients() {
             mUsers.erase(user);
             user--;
             Debug::Log::i(LOG_TAG,
-                "User %d logged out (no logged in clients)", user->token);
+                "User %s logged out (no logged in clients)", user->token);
         }
     }
 
@@ -140,10 +140,10 @@ void Server::handleLogin(Client& client, const comm::Message& message, bool logg
     }
 
     const UserToken* token = reinterpret_cast<const UserToken* const >(message.getPayload());
-    Debug::Log::d(LOG_TAG, "%s(): token %d", __func__, *token);
+    Debug::Log::d(LOG_TAG, "%s(): token %s", __func__, *token);
 
     if (logged) {
-        // Send login response (already logged)
+        // TODO: Send login response (already logged)
         return;
     }
 
@@ -186,11 +186,11 @@ bool Server::authenticate(const UserToken token) {
     const bool success = database.authenticateUserToken(token, mServerName);
     if (success) {
         Debug::Log::d(LOG_TAG,
-            "%s(): User %d successfully authenticated in server %s",
+            "%s(): User %s successfully authenticated in server %s",
             __func__, token, mServerName);
     } else {
         Debug::Log::d(LOG_TAG,
-            "%s(): Could not authenticate user %d in server %s",
+            "%s(): Could not authenticate user %s in server %s",
             __func__, token, mServerName);
     }
 
@@ -198,19 +198,19 @@ bool Server::authenticate(const UserToken token) {
 }
 
 bool Server::tryToLogin(const UserToken token, Client& client) {
-    Debug::Log::i(LOG_TAG, "Login attempt with token %d", token);
+    Debug::Log::i(LOG_TAG, "Login attempt with token %s", token);
 
     if (!authenticate(token)) {
-        Debug::Log::i(LOG_TAG, "User token %d not registered in this server", token);
+        Debug::Log::i(LOG_TAG, "User token %s not registered in this server", token);
         // TODO: Send response (login error)
         return false;
     }
 
     for (User user : mUsers) {
-        if (user.token == token) {
+        if (0 == strcmp(user.token, token)) {
             user.clients.emplace_back(client);
             client.user = &user;
-            Debug::Log::i(LOG_TAG, "User %d logged in with new client", token);
+            Debug::Log::i(LOG_TAG, "User %s logged in with new client", token);
             return true;
         }
     }
@@ -218,7 +218,7 @@ bool Server::tryToLogin(const UserToken token, Client& client) {
     User newUser(token);
     newUser.clients.emplace_back(client);
     client.user = &newUser;
-    Debug::Log::i(LOG_TAG, "New user %d logged in", token);
+    Debug::Log::i(LOG_TAG, "New user %s logged in", token);
 
     // TODO: Send response (login success)
 
