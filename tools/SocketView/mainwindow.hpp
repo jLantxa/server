@@ -17,5 +17,6 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    const char* WINDOW_TITLE = "SocketView";
 };
 #endif // MAINWINDOW_HPP
