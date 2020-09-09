@@ -50,11 +50,17 @@ public:
         return header.size;
     }
 
+    inline uint8_t getLength() const {
+        return header.size + sizeof(header);
+    }
+
     inline const uint8_t* getPayload() const {
         return payload;
     }
 
     bool isValid() const;
+
+    bool serialize(uint8_t* buffer, uint16_t bufferSize) const;
 
 private:
     Header header;

@@ -30,11 +30,11 @@ namespace server::net {
 Connection::Connection(int sockfd) : m_sockfd(sockfd) {
 }
 
-void Connection::Send(uint8_t* buffer, std::size_t len) const {
+void Connection::Send(void* buffer, std::size_t len) const {
     send(m_sockfd, buffer, len, 0);
 }
 
-std::size_t Connection::Read(uint8_t* buffer, std::size_t len) const {
+std::size_t Connection::Read(void* buffer, std::size_t len) const {
     return read(m_sockfd, buffer, len);
 }
 

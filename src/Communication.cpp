@@ -15,6 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <cstring>
+
 #include <numeric>
 
 #include "Communication.hpp"
@@ -80,6 +82,16 @@ bool Message::isValid() const {
 
 bool Message::isCheckSumOk() const {
     return calculateChecksum() == header.checksum;
+}
+
+bool Message::serialize(uint8_t* buffer, uint16_t bufferSize) const {
+    if (bufferSize < getLength()) {
+        return false;
+    }
+
+    memcpy(buffer, &header, sizeof(header));
+    memcpy(buffer + sizeof(header), payload, header.size);
+    return true;
 }
 
 }  // namespace comm

@@ -100,6 +100,8 @@ protected:
      */
     virtual void onMessageReceived(Client& client, const comm::Message& message) = 0;
 
+    virtual void sendMessage(const comm::Message& message, const Client& client);
+
 private:
     static constexpr auto REMOVE_IDLE_PERIOD = std::chrono::seconds(30);
     static constexpr int32_t CLIENT_MAX_IDLE_TIMEOUT = 300;
@@ -151,6 +153,23 @@ private:
      * \return Current timestamp in seconds from epoch.
      */
     static int64_t getCurrentTime();
+
+    unsigned int getNumUnloggedConnections() const;
+
+    unsigned int getNumLoggedConnections() const;
+
+    void printNumClients() const ;
+
+    class LoginResponse : public comm::Message {
+    public:
+        enum Response: uint8_t {
+            LOGIN_OK = 0,
+            LOGIN_FAILED = 1,
+            ALREADY_LOGGED_IN = 2,
+        };
+
+        LoginResponse(Response response);
+    };
 };
 
 }  //namespace server

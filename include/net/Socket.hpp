@@ -38,17 +38,17 @@ public:
     virtual ~Connection() = default;
 
     /** \brief Send a buffer of bytes
-    * \param buffer A pointer to a buffer of uint8_t.
+    * \param buffer A pointer to a buffer.
     * \param len The size of the buffer
     */
-    virtual void Send(uint8_t* buffer, std::size_t len) const;
+    virtual void Send(void* buffer, std::size_t len) const;
 
     /** \brief Read a buffer of bytes
-    * \param buffer A pointer to a buffer of uint8_t to store the received data.
+    * \param buffer A pointer to a buffer to store the received data.
     * \param len The size of the buffer
     * \returns Number of bytes read.
     */
-    virtual std::size_t Read(uint8_t* buffer, std::size_t len) const;
+    virtual std::size_t Read(void* buffer, std::size_t len) const;
 
 protected:
     int m_sockfd;

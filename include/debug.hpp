@@ -22,12 +22,12 @@
 
 namespace Debug
 {
+
 #ifdef DEBUG_LEVEL
     static constexpr int defined_level = DEBUG_LEVEL;
 #else
     static constexpr int defined_level = 0;
 #endif
-
 
     template <typename... Args>
     static void log(const char* tag, const char* levelTag, const char* fmt, Args... args) {

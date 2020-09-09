@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <cstdint>
 #include <cstring>
 #include <ctime>
 
@@ -67,6 +68,7 @@ void Server::run() {
             net::Connection connection = mServerSocket.Accept();
             mUnloggedConnections.emplace_back(connection);
             Debug::Log::i(LOG_TAG, "New unlogged connection");
+            printNumClients();
         }
     });
 
@@ -123,6 +125,8 @@ void Server::removeIdleClients() {
             Debug::Log::i(LOG_TAG, "Unlogged client timed out (%d s)", idleTime);
         }
     }
+
+    printNumClients();
 }
 
 void Server::handleLogin(Client& client, const comm::Message& message, bool logged) {
@@ -143,7 +147,8 @@ void Server::handleLogin(Client& client, const comm::Message& message, bool logg
     Debug::Log::d(LOG_TAG, "%s(): token %s", __func__, *token);
 
     if (logged) {
-        // TODO: Send login response (already logged)
+        LoginResponse alreadyLoggedResponse(LoginResponse::LOGIN_FAILED);
+        sendMessage(alreadyLoggedResponse, client);
         return;
     }
 
@@ -202,7 +207,8 @@ bool Server::tryToLogin(const UserToken token, Client& client) {
 
     if (!authenticate(token)) {
         Debug::Log::i(LOG_TAG, "User token %s not registered in this server", token);
-        // TODO: Send response (login error)
+        LoginResponse failedResponse(LoginResponse::LOGIN_FAILED);
+        sendMessage(failedResponse, client);
         return false;
     }
 
@@ -220,10 +226,51 @@ bool Server::tryToLogin(const UserToken token, Client& client) {
     client.user = &newUser;
     Debug::Log::i(LOG_TAG, "New user %s logged in", token);
 
-    // TODO: Send response (login success)
+    LoginResponse okResponse(LoginResponse::LOGIN_FAILED);
+    sendMessage(okResponse, client);
 
     onLogin(client);
     return true;
+}
+
+void Server::sendMessage(const comm::Message& message, const Client& client) {
+    const bool serializeOk = message.serialize(mMessageBuffer, BUFFER_SIZE);
+    const uint16_t msgSize =  message.getLength();
+    if (serializeOk) {
+        client.connection.Send(mMessageBuffer, msgSize);
+        Debug::Log::v(LOG_TAG, "Sent message of size %d", msgSize);
+    } else {
+        Debug::Log::v(LOG_TAG,
+            "Could not send message because the buffer "
+            "was too short to serialize it (%d bytes into %d)", msgSize, BUFFER_SIZE);
+    }
+}
+
+unsigned int Server::getNumUnloggedConnections() const {
+    return mUnloggedConnections.size();
+}
+
+unsigned int Server::getNumLoggedConnections() const {
+    unsigned int count = 0;
+    for (User user : mUsers) {
+        count += user.clients.size();
+    }
+    return count;
+}
+
+void Server::printNumClients() const {
+    const unsigned numLogged = getNumLoggedConnections();
+    const unsigned numUnlogged = getNumUnloggedConnections();
+    Debug::Log::i(LOG_TAG,
+        "%d connections (%d logged, %d unlogged)",
+        numUnlogged + numLogged,
+        numLogged,
+        numUnlogged);
+}
+
+Server::LoginResponse::LoginResponse(Response response)
+:   comm::Message(comm::ServerMessageTypes::LOGIN, (uint8_t[]) {response}, sizeof(Response))
+{
 }
 
 }  // namespace server
