@@ -34,6 +34,9 @@ clean:
 doxygen:
 	doxygen
 
+cloc:
+	@cloc $(INCLUDE) $(SRC) $(TEST) Makefile
+
 
 NOTIFICATION_SERVER_SRC = \
 	$(SRC)/net/Socket.cpp \
