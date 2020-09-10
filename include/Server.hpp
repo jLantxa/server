@@ -19,6 +19,7 @@
 #define _INCLUDE_SERVER_HPP_
 
 #include <cstdint>
+#include <cstring>
 
 #include <chrono>
 #include <string>
@@ -74,10 +75,12 @@ protected:
     };
 
     struct User final {
-        UserToken token;
+        char token[256];
         std::vector<Client> clients;
 
-        User(const UserToken token) : token(token) { }
+        User(const char* userToken) {
+            strcpy(token, userToken);
+        }
     };
 
     /**
@@ -85,7 +88,7 @@ protected:
      * \param userToken User token.
      * \return true if this user token is registered in this server, false otherwise.
      */
-    bool authenticate(const UserToken userToken);
+    bool authenticate(const char* userToken);
 
     /**
      * \brief Called when a user logs in.
@@ -147,7 +150,7 @@ private:
      * \param client The client that sent the login request.
      * \return true if the token was authenticated, false otherwise.
      */
-    bool tryToLogin(const UserToken token, Client& client);
+    bool tryToLogin(const char* token, Client& client);
 
     /**
      * \brief Returns the current time.

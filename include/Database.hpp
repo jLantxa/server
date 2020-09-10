@@ -24,8 +24,6 @@
 
 namespace server {
 
-using UserToken = char*;
-
 /**
  * \brief Base class for a database handler.
  */
@@ -40,7 +38,7 @@ public:
      * \
      * \return true if the token is registered in the database, false otherwise.
      */
-    bool authenticateUserToken(const UserToken token, const char* serverName) const;
+    bool authenticateUserToken(const char* token, const char* serverName) const;
 
 protected:
     sqlite3* mDb;

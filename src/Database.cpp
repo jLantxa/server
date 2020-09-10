@@ -69,7 +69,7 @@ void Database::createUserTable() {
     }
 }
 
-bool Database::authenticateUserToken(const UserToken token, const char* serverName) const {
+bool Database::authenticateUserToken(const char* token, const char* serverName) const {
     Debug::Log::d(LOG_TAG, "%s()", __func__);
 
     bool auth = false;

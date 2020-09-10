@@ -111,19 +111,19 @@ void Server::removeIdleClients() {
         }
 
         if (userClients.size() == 0) {
-            mUsers.erase(user);
-            user--;
             Debug::Log::i(LOG_TAG,
                 "User %s logged out (no logged in clients)", user->token);
+            mUsers.erase(user);
+            user--;
         }
     }
 
     for (auto client = mUnloggedConnections.begin(); client != mUnloggedConnections.end(); client++) {
         const int64_t idleTime = now - client->lastActiveTime;
         if (idleTime >= CLIENT_MAX_IDLE_TIMEOUT) {
+            Debug::Log::i(LOG_TAG, "Unlogged client timed out (%d s)", idleTime);
             mUnloggedConnections.erase(client);
             client--;
-            Debug::Log::i(LOG_TAG, "Unlogged client timed out (%d s)", idleTime);
         }
     }
 
@@ -144,7 +144,7 @@ bool Server::handleLogin(Client& client, const comm::Message& message) {
         return false;
     }
 
-    const UserToken token = (const UserToken) message.getPayload();
+    const char* token = (const char*) message.getPayload();
     Debug::Log::d(LOG_TAG, "%s(): token = %s", __func__, token);
 
     return tryToLogin(token, client);
@@ -194,7 +194,7 @@ void Server::pollMessages() {
     }
 }
 
-bool Server::authenticate(const UserToken token) {
+bool Server::authenticate(const char* token) {
     const Database& database = Database::getInstance();
     const bool success = database.authenticateUserToken(token, mServerName);
     if (success) {
@@ -210,7 +210,7 @@ bool Server::authenticate(const UserToken token) {
     return success;
 }
 
-bool Server::tryToLogin(const UserToken token, Client& client) {
+bool Server::tryToLogin(const char* token, Client& client) {
     Debug::Log::i(LOG_TAG, "Login attempt with token %s", token);
 
     if (!authenticate(token)) {
