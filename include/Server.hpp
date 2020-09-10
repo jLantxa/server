@@ -106,9 +106,9 @@ protected:
     virtual void sendMessage(const comm::Message& message, const Client& client);
 
 private:
-    static constexpr auto REMOVE_IDLE_PERIOD = std::chrono::seconds(30);
-    static constexpr int32_t CLIENT_MAX_IDLE_TIMEOUT = 300;
-    static constexpr auto HANDLE_MESSAGES_PERIOD = std::chrono::milliseconds(100);
+    std::chrono::seconds mRemoveIdlePeriod_sec = std::chrono::seconds(30);
+    std::chrono::seconds mClientMaxIdleTimeout_sec = std::chrono::seconds(300);
+    std::chrono::milliseconds mHandleMessagesPeriod_ms = std::chrono::milliseconds(5);
 
     const char* mServerName;
     volatile bool mRunning = false;
@@ -125,6 +125,18 @@ private:
      *        predetermined amount of time.
      */
     void removeIdleClients();
+
+    /**
+     * \brief Removes an user if it no longer has logged clients.
+     * \param user An iterator for the user.
+     * \return true if the user was removed, false otherwise.
+     */
+    bool removeUserIfUnlogged(std::vector<User>::iterator user);
+
+    /**
+     * \brief Remove users that no longer have logged clients.
+     */
+    void removeUnloggedUsers();
 
     /**
      * \brief Read incoming messages from logged and unlogged clients and handle them.
@@ -161,12 +173,12 @@ private:
     /**
      * \brief Returns the number of unlogged connections.
      */
-    unsigned int getNumUnloggedConnections() const;
+    std::size_t getNumUnloggedConnections() const;
 
     /**
      * \brief Returns the number of logged connections.
      */
-    unsigned int getNumLoggedConnections() const;
+    std::size_t getNumLoggedConnections() const;
 
     /**
      * \brief Prints a log with the number of connections.

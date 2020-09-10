@@ -76,14 +76,14 @@ void Server::run() {
     std::thread removeIdleClientsThread([&]() {
         while (mRunning) {
             removeIdleClients();
-            std::this_thread::sleep_for(REMOVE_IDLE_PERIOD);
+            std::this_thread::sleep_for(mRemoveIdlePeriod_sec);
         }
     });
 
     std::thread handleMessagesThread([&]() {
         while (mRunning) {
             pollMessages();
-            std::this_thread::sleep_for(HANDLE_MESSAGES_PERIOD);
+            std::this_thread::sleep_for(mHandleMessagesPeriod_ms);
         }
     });
 
@@ -94,6 +94,17 @@ void Server::run() {
     Debug::Log::i(LOG_TAG, "Exit %s()", __func__);
 }
 
+bool Server::removeUserIfUnlogged(std::vector<User>::iterator user) {
+    if (user->clients.size() == 0) {
+        Debug::Log::i(LOG_TAG, "User %s unlogged (no clients connected)", user->token);
+        mUsers.erase(user);
+        user--;
+        return true;
+    }
+
+    return false;
+}
+
 void Server::removeIdleClients() {
     Debug::Log::v(LOG_TAG, "Enter %s()", __func__);
 
@@ -102,7 +113,7 @@ void Server::removeIdleClients() {
         std::vector<Client>& userClients = user->clients;
         for (auto client = userClients.begin(); client < userClients.end(); client++) {
             const int64_t idleTime = now - client->lastActiveTime;
-            if (idleTime >= CLIENT_MAX_IDLE_TIMEOUT) {
+            if (idleTime >= mClientMaxIdleTimeout_sec.count()) {
                 userClients.erase(client);
                 client--;
                 Debug::Log::i(LOG_TAG,
@@ -110,17 +121,12 @@ void Server::removeIdleClients() {
             }
         }
 
-        if (userClients.size() == 0) {
-            Debug::Log::i(LOG_TAG,
-                "User %s logged out (no logged in clients)", user->token);
-            mUsers.erase(user);
-            user--;
-        }
+        removeUserIfUnlogged(user);
     }
 
     for (auto client = mUnloggedConnections.begin(); client != mUnloggedConnections.end(); client++) {
         const int64_t idleTime = now - client->lastActiveTime;
-        if (idleTime >= CLIENT_MAX_IDLE_TIMEOUT) {
+        if (idleTime >= mClientMaxIdleTimeout_sec.count()) {
             Debug::Log::i(LOG_TAG, "Unlogged client timed out (%d s)", idleTime);
             mUnloggedConnections.erase(client);
             client--;
@@ -159,6 +165,7 @@ void Server::pollMessages() {
         else if (numBytes == 0) {
             mUnloggedConnections.erase(client_it);
             client_it--;
+            printNumClients();
             continue;
         }
 
@@ -173,15 +180,22 @@ void Server::pollMessages() {
         }
     }
 
-    for (User user : mUsers) {
-        for (auto client_it = user.clients.begin(); client_it != user.clients.end(); client_it++) {
+    for (auto user = mUsers.begin(); user < mUsers.end(); user++) {
+        for (auto client_it = user->clients.begin(); client_it != user->clients.end(); client_it++) {
             const ssize_t numBytes = client_it->connection.Read(mMessageBuffer, BUFFER_SIZE);
             if (numBytes < 0) {
                 continue;
             }
             else if (numBytes == 0) {
-                user.clients.erase(client_it);
+                user->clients.erase(client_it);
                 client_it--;
+
+                if (removeUserIfUnlogged(user)) {
+                    printNumClients();
+                    break;
+                }
+
+                printNumClients();
                 continue;
             }
 
@@ -229,8 +243,6 @@ bool Server::tryToLogin(const char* token, Client& client) {
             client.user = &user;
             user.clients.emplace_back(client.connection, &user);
             Debug::Log::i(LOG_TAG, "User %s logged in with new client", user.token);
-
-            printNumClients();
             return true;
         }
     }
@@ -260,26 +272,27 @@ void Server::sendMessage(const comm::Message& message, const Client& client) {
     }
 }
 
-unsigned int Server::getNumUnloggedConnections() const {
+std::size_t Server::getNumUnloggedConnections() const {
     return mUnloggedConnections.size();
 }
 
-unsigned int Server::getNumLoggedConnections() const {
+std::size_t Server::getNumLoggedConnections() const {
     unsigned int count = 0;
-    for (User user : mUsers) {
+    for (auto& user : mUsers) {
         count += user.clients.size();
     }
     return count;
 }
 
 void Server::printNumClients() const {
-    const unsigned numLogged = getNumLoggedConnections();
-    const unsigned numUnlogged = getNumUnloggedConnections();
+    const std::size_t numLogged = getNumLoggedConnections();
+    const std::size_t numUnlogged = getNumUnloggedConnections();
     Debug::Log::i(LOG_TAG,
-        "%d connections (%d logged, %d unlogged)",
+        "%u connections (%u logged, %u unlogged), %u users",
         numUnlogged + numLogged,
         numLogged,
-        numUnlogged);
+        numUnlogged,
+        mUsers.size());
 }
 
 Server::LoginResponse::LoginResponse(Response response)

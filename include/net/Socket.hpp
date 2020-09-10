@@ -42,7 +42,7 @@ public:
 	* \param len The size of the buffer.
 	* \returns Number of bytes sent.
     */
-	virtual ssize_t Send(void* buffer, std::size_t len) const;
+    virtual ssize_t Send(void* buffer, std::size_t len) const;
 
     /** \brief Read a buffer of bytes
     * \param buffer A pointer to a buffer to store the received data.
