@@ -39,16 +39,19 @@ public:
 
     /** \brief Send a buffer of bytes
     * \param buffer A pointer to a buffer.
-    * \param len The size of the buffer
+	* \param len The size of the buffer.
+	* \returns Number of bytes sent.
     */
-    virtual void Send(void* buffer, std::size_t len) const;
+	virtual ssize_t Send(void* buffer, std::size_t len) const;
 
     /** \brief Read a buffer of bytes
     * \param buffer A pointer to a buffer to store the received data.
     * \param len The size of the buffer
     * \returns Number of bytes read.
     */
-    virtual std::size_t Read(void* buffer, std::size_t len) const;
+    virtual ssize_t Read(void* buffer, std::size_t len, int flags = MSG_DONTWAIT) const;
+
+    int GetSockFd();
 
 protected:
     int m_sockfd;
@@ -85,6 +88,8 @@ public:
 
     Socket(Domain domain, Type type);
     virtual ~Socket();
+
+    void Close();
 
 protected:
     int m_domain;

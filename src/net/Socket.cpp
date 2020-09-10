@@ -16,6 +16,7 @@
 */
 
 #include <arpa/inet.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -25,17 +26,22 @@
 
 static __attribute_used__ const char* LOG_TAG = "net::Socket";
 
-namespace server::net {
+namespace server {
+namespace net {
 
 Connection::Connection(int sockfd) : m_sockfd(sockfd) {
 }
 
-void Connection::Send(void* buffer, std::size_t len) const {
-    send(m_sockfd, buffer, len, 0);
+ssize_t Connection::Send(void* buffer, std::size_t len) const {
+    return send(m_sockfd, buffer, len, 0);
 }
 
-std::size_t Connection::Read(void* buffer, std::size_t len) const {
-    return read(m_sockfd, buffer, len);
+ssize_t Connection::Read(void* buffer, std::size_t len, int flags) const {
+    return recv(m_sockfd, buffer, len, flags);
+}
+
+int Connection::GetSockFd() {
+    return m_sockfd;
 }
 
 
@@ -47,6 +53,10 @@ Socket::Socket(Domain domain, Type type)
 }
 
 Socket::~Socket() {
+    Close();
+}
+
+void Socket::Close() {
     setsockopt(m_sockfd ,SOL_SOCKET, SO_REUSEADDR, (const void*) true, sizeof(int));
 }
 
@@ -109,4 +119,5 @@ void ClientSocket::Connect() {
     }
 }
 
-}  // namespace server::net
+}  // namespace net
+}  // namespace server

@@ -27,7 +27,7 @@ static __attribute_used__ const char* LOG_TAG = "Communication";
 namespace server {
 namespace comm {
 
-Message::Message(const uint8_t* const buffer, const uint16_t bufferSize) {
+Message::Message(uint8_t* buffer, const uint16_t bufferSize) {
     Debug::Log::v(LOG_TAG, "%s()", __func__);
 
     static constexpr uint8_t typeOffset = 0;
@@ -36,44 +36,47 @@ Message::Message(const uint8_t* const buffer, const uint16_t bufferSize) {
     static constexpr uint8_t payloadOffset = sizeof(header);
 
     header.type = *(reinterpret_cast<const MessageType* const>(buffer + typeOffset));
-    header.size = *(reinterpret_cast<const MessageType* const>(buffer + sizeOffset));
-    header.checksum = *(reinterpret_cast<const MessageType* const>(buffer + checksumOffset));
+    header.checksum = *(reinterpret_cast<const uint8_t* const>(buffer + checksumOffset));
+    header.size = *(reinterpret_cast<const uint16_t* const>(buffer + sizeOffset));
     payload = reinterpret_cast<const uint8_t* const>(buffer + payloadOffset);
 
+    const uint8_t calculatedChecksum = calculateChecksum();
+
     if (header.size > bufferSize) {
-        header.size = 0;
         validFlag = false;
         Debug::Log::w(LOG_TAG, "%s(): declared message size bigger than buffer", __func__);
     } else {
-        validFlag = isCheckSumOk();
+        validFlag = calculatedChecksum == header.checksum;
     }
 
-    Debug::Log::v(LOG_TAG, "%s(): type=%d, size=%d, valid=%d",
-        __func__, header.type, header.size, validFlag);
+    Debug::Log::v(LOG_TAG, "%s(): Processed message type=%u, csum/calc=%u/%u, size=%u, valid=%u",
+        __func__, header.type, header.checksum, calculatedChecksum, header.size, validFlag);
 }
 
-Message::Message(MessageType type, const uint8_t *const buffer, const uint16_t size) {
-    header.type =  type;
+Message::Message(MessageType type, uint8_t* buffer, const uint16_t size) {
+    header.type = type;
     header.size = size;
     payload = buffer;
+    header.checksum = calculateChecksum();
 
     if (header.size > (size - sizeof(header))) {
-        header.size = 0;
         validFlag = false;
         Debug::Log::w(LOG_TAG, "%s(): declared message size bigger than buffer", __func__);
     } else {
-        header.checksum = calculateChecksum();
-        validFlag = isCheckSumOk();
+        validFlag = true;
     }
 
-    Debug::Log::v(LOG_TAG, "%s(): type=%d, size=%d, valid=%d",
-        __func__, header.type, header.size, validFlag);
+    Debug::Log::v(LOG_TAG, "%s(): Created message type=%u, csum=%u, size=%u",
+        __func__, header.type, header.checksum, header.size);
 
 }
 
 uint8_t Message::calculateChecksum() const {
-    const uint8_t sum = std::accumulate(payload, payload + header.size, header.type + header.size);
-    return (0xFF - sum);
+    uint8_t sum = header.type + header.size;
+    for (uint16_t i = 0; i < header.size; i++) {
+        sum += payload[i];
+    }
+    return 0xFF - sum;
 }
 
 bool Message::isValid() const {

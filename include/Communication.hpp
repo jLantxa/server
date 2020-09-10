@@ -33,8 +33,8 @@ using MessageType = uint16_t;
 */
 class Message {
 public:
-    Message(const uint8_t *const buffer, const uint16_t maxSize);
-    Message(MessageType type, const uint8_t *const buffer, const uint16_t size);
+    Message(uint8_t* buffer, const uint16_t maxSize);
+    Message(MessageType type, uint8_t*  buffer, const uint16_t size);
 
     struct Header {
         MessageType type;

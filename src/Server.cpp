@@ -66,7 +66,8 @@ void Server::run() {
         while (mRunning) {
             // Accept is a blocking call so no need for a sleep
             net::Connection connection = mServerSocket.Accept();
-            mUnloggedConnections.emplace_back(connection);
+            Client newClient(connection);
+            mUnloggedConnections.push_back(newClient);
             Debug::Log::i(LOG_TAG, "New unlogged connection");
             printNumClients();
         }
@@ -129,58 +130,65 @@ void Server::removeIdleClients() {
     printNumClients();
 }
 
-void Server::handleLogin(Client& client, const comm::Message& message, bool logged) {
+bool Server::handleLogin(Client& client, const comm::Message& message) {
     Debug::Log::v(LOG_TAG, "Enter %s()", __func__);
 
     const comm::MessageType type = message.getType();
-    const uint16_t size = message.getPayloadSize();
+    const uint16_t size =  message.getPayloadSize();
 
     if (type != comm::ServerMessageTypes::LOGIN){
-        Debug::Log::d(LOG_TAG, "%s(): Message type %d is not LOGIN", __func__, type);
-        return;
-    } else if (size != sizeof(UserToken)) {
-        Debug::Log::d(LOG_TAG, "%s(): LOGIN message contained invalid payload", __func__);
-        return;
+        Debug::Log::v(LOG_TAG, "%s(): Message type %d is not LOGIN", __func__, type);
+        return false;
+    } else if (size == 0) {
+        Debug::Log::e(LOG_TAG, "%s(): LOGIN message has size 0", __func__);
+        return false;
     }
 
-    const UserToken* token = reinterpret_cast<const UserToken* const >(message.getPayload());
-    Debug::Log::d(LOG_TAG, "%s(): token %s", __func__, *token);
+    const UserToken token = (const UserToken) message.getPayload();
+    Debug::Log::d(LOG_TAG, "%s(): token = %s", __func__, token);
 
-    if (logged) {
-        LoginResponse alreadyLoggedResponse(LoginResponse::LOGIN_FAILED);
-        sendMessage(alreadyLoggedResponse, client);
-        return;
-    }
-
-    tryToLogin(*token, client);
+    return tryToLogin(token, client);
 }
 
 void Server::pollMessages() {
-    for (Client client : mUnloggedConnections) {
-        const BufferSize numBytes = client.connection.Read(mMessageBuffer, BUFFER_SIZE);
-        if (numBytes == 0) {
+    for (auto client_it = mUnloggedConnections.begin(); client_it != mUnloggedConnections.end(); client_it++) {
+        const ssize_t numBytes = client_it->connection.Read(mMessageBuffer, BUFFER_SIZE);
+        if (numBytes < 0) {
+            continue;
+        }
+        else if (numBytes == 0) {
+            mUnloggedConnections.erase(client_it);
+            client_it--;
             continue;
         }
 
-        client.refreshTime();
+        client_it->refreshTime();
         comm::Message msg(mMessageBuffer, numBytes);
         if (msg.isValid()) {
-            handleLogin(client, msg, false);
+            if (handleLogin(*client_it, msg) == true) {
+                mUnloggedConnections.erase(client_it);
+                client_it--;
+                printNumClients();
+            }
         }
     }
 
     for (User user : mUsers) {
-        for (Client& client : user.clients) {
-            const BufferSize numBytes = client.connection.Read(mMessageBuffer, BUFFER_SIZE);
-            if (numBytes == 0) {
+        for (auto client_it = user.clients.begin(); client_it != user.clients.end(); client_it++) {
+            const ssize_t numBytes = client_it->connection.Read(mMessageBuffer, BUFFER_SIZE);
+            if (numBytes < 0) {
+                continue;
+            }
+            else if (numBytes == 0) {
+                user.clients.erase(client_it);
+                client_it--;
                 continue;
             }
 
-            client.refreshTime();
+            client_it->refreshTime();
             comm::Message msg(mMessageBuffer, numBytes);
             if (msg.isValid()) {
-                handleLogin(client, msg, true);
-                onMessageReceived(client, msg);
+                onMessageReceived(*client_it, msg);
             }
         }
     }
@@ -212,21 +220,27 @@ bool Server::tryToLogin(const UserToken token, Client& client) {
         return false;
     }
 
-    for (User user : mUsers) {
+    LoginResponse okResponse(LoginResponse::LOGIN_OK);
+
+    for (User& user : mUsers) {
         if (0 == strcmp(user.token, token)) {
-            user.clients.emplace_back(client);
+            sendMessage(okResponse, client);
+
             client.user = &user;
-            Debug::Log::i(LOG_TAG, "User %s logged in with new client", token);
+            user.clients.emplace_back(client.connection, &user);
+            Debug::Log::i(LOG_TAG, "User %s logged in with new client", user.token);
+
+            printNumClients();
             return true;
         }
     }
 
     User newUser(token);
-    newUser.clients.emplace_back(client);
     client.user = &newUser;
-    Debug::Log::i(LOG_TAG, "New user %s logged in", token);
+    newUser.clients.push_back(client);
+    mUsers.push_back(newUser);
 
-    LoginResponse okResponse(LoginResponse::LOGIN_FAILED);
+    Debug::Log::i(LOG_TAG, "New user %s logged in", token);
     sendMessage(okResponse, client);
 
     onLogin(client);

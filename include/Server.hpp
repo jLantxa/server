@@ -136,8 +136,9 @@ private:
      *        login request, attempt to log in.
      * \param buffer The buffer received.
      * \param size Size of the buffer in bytes.
+     * \return true if unlogged client successfully logged in, false in all other cases.
      */
-    void handleLogin(Client& client, const comm::Message& message, bool logged);
+    bool handleLogin(Client& client, const comm::Message& message);
 
     /**
      * \brief Try to log in a user token. If the user token is sucessfully authenticated, the
@@ -154,10 +155,19 @@ private:
      */
     static int64_t getCurrentTime();
 
+    /**
+     * \brief Returns the number of unlogged connections.
+     */
     unsigned int getNumUnloggedConnections() const;
 
+    /**
+     * \brief Returns the number of logged connections.
+     */
     unsigned int getNumLoggedConnections() const;
 
+    /**
+     * \brief Prints a log with the number of connections.
+     */
     void printNumClients() const ;
 
     class LoginResponse : public comm::Message {
@@ -165,7 +175,6 @@ private:
         enum Response: uint8_t {
             LOGIN_OK = 0,
             LOGIN_FAILED = 1,
-            ALREADY_LOGGED_IN = 2,
         };
 
         LoginResponse(Response response);

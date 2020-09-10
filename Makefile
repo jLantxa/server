@@ -1,4 +1,4 @@
-SRC	 	:= src
+SRC	:= src
 INCLUDE := include
 TEST	:= test
 BUILD  	:= build

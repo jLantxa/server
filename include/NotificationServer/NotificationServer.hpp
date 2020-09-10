@@ -34,7 +34,6 @@ public:
 private:
     void onLogin(Client& client) override;
     void onMessageReceived(Client& client, const comm::Message& message) override;
-
 };
 
 }  // namespace server

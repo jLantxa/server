@@ -28,14 +28,14 @@ static __attribute_used__ const char* LOG_TAG = "Database";
 namespace server {
 
 Database::Database() {
-   const int result = sqlite3_open("server.db", &mDb);
+    const int result = sqlite3_open("server.db", &mDb);
 
-   if(result) {
-      Debug::Log::e(LOG_TAG, "%s(): Can't open database: %s", __func__, sqlite3_errmsg(mDb));
-      return;
-   } else {
-      Debug::Log::e(LOG_TAG, "%s(): Opened database", __func__);
-   }
+    if(result) {
+        Debug::Log::e(LOG_TAG, "%s(): Can't open database: %s", __func__, sqlite3_errmsg(mDb));
+        return;
+    } else {
+        Debug::Log::i(LOG_TAG, "%s(): Opened database", __func__);
+    }
 
     createUserTable();
 }
@@ -77,7 +77,7 @@ bool Database::authenticateUserToken(const UserToken token, const char* serverNa
     char sql[256];
     static const char* SQL_SELECT_USER =
         "SELECT COUNT(*) FROM Users "
-        "WHERE Token = %s AND %s = 1;";
+        "WHERE Token = '%s' AND %s = '1';";
 
     sprintf(sql, SQL_SELECT_USER, token, serverName);
 
@@ -93,7 +93,7 @@ bool Database::authenticateUserToken(const UserToken token, const char* serverNa
     char *zErrMsg = 0;
     const int rc = sqlite3_exec(mDb, sql, callback, &auth, nullptr);
     if (rc != SQLITE_OK) {
-        Debug::Log::e(LOG_TAG, "%s(): SQL error: %s", __func__, zErrMsg);
+        Debug::Log::e(LOG_TAG, "%s():%d SQL error: %s", __func__, __LINE__, zErrMsg);
         sqlite3_free(zErrMsg);
         return false;
     }
