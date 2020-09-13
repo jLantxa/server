@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "utils/TextUtils.hpp"
+#include "util/TextUtils.hpp"
 
 #include <string>
 #include <vector>

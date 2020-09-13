@@ -1,8 +1,9 @@
-SRC	:= src
+SRC     := src
 INCLUDE := include
-TEST	:= test
-BUILD  	:= build
-DOC		:= doc
+TOOLS   := tools
+TEST    := test
+BUILD   := build
+DOC     := doc
 
 CXX := clang++
 
@@ -13,18 +14,18 @@ CXX_FLAGS := \
 	-Werror \
 	-O3
 
-LD_FLAGS := -pthread -lcrypto -lsqlite3
-
-DEFINES := -DDEBUG_LEVEL=100
-
+LD_FLAGS := -pthread -lsqlite3
 
 all: init doxygen
 	@make -j servers
+	@make -j tests
+	@make run-tests
 
 servers: notification
 
 init:
 	@mkdir -p $(BUILD)
+	@mkdir -p $(BUILD)/$(TEST)
 
 clean:
 	@rm -rf $(BUILD)
@@ -35,7 +36,7 @@ doxygen:
 	doxygen
 
 cloc:
-	@cloc $(INCLUDE) $(SRC) $(TEST) Makefile
+	@cloc $(INCLUDE) $(SRC) $(TEST) $(TOOLS) Makefile
 
 
 NOTIFICATION_SERVER_SRC = \
@@ -44,6 +45,8 @@ NOTIFICATION_SERVER_SRC = \
 	$(SRC)/Database.cpp \
 	$(SRC)/Server.cpp \
 	$(SRC)/NotificationServer/NotificationServer.cpp
+
+NOTIFICATION_DEFINES := -DDEBUG_LEVEL=5
 NOTIFICATION_SERVER_TARGET = NotificationServer
 
 notification:
@@ -51,5 +54,30 @@ notification:
 		-I $(INCLUDE) \
 		$(NOTIFICATION_SERVER_SRC) \
 		$(LD_FLAGS) \
-		$(DEFINES) \
+		$(NOTIFICATION_DEFINES) \
 		-o $(BUILD)/$(NOTIFICATION_SERVER_TARGET)
+
+
+TEST_SRC += \
+	$(TEST)/Test.cpp \
+	$(TEST)/SocketTest.cpp \
+	$(SRC)/util/TextUtils.cpp \
+	$(TEST)/ServerTest.cpp \
+	$(SRC)/Server.cpp \
+	$(SRC)/net/Socket.cpp \
+	$(SRC)/Communication.cpp \
+	$(SRC)/Database.cpp
+
+TEST_DEFINES := -DDEBUG_LEVEL=1 -DTEST
+TEST_TARGET := Test
+
+tests:
+	$(CXX) $(CXX_FLAGS) \
+		-I $(INCLUDE) \
+		$(TEST_SRC) \
+		$(LD_FLAGS) -lgtest -g3 \
+		$(TEST_DEFINES) \
+		-o $(BUILD)/$(TEST)/$(TEST_TARGET)
+
+run-tests:
+	./$(BUILD)/$(TEST)/$(TEST_TARGET)

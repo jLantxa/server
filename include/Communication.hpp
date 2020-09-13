@@ -36,7 +36,7 @@ public:
     Message(uint8_t* buffer, const uint16_t maxSize);
     Message(MessageType type, uint8_t*  buffer, const uint16_t size);
 
-    struct Header {
+    struct __attribute__((packed)) Header {
         MessageType type;
         uint8_t checksum;
         uint16_t size = 0;

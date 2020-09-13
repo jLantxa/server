@@ -88,7 +88,7 @@ protected:
      * \param userToken User token.
      * \return true if this user token is registered in this server, false otherwise.
      */
-    bool authenticate(const char* userToken);
+    virtual bool authenticate(const char* userToken);
 
     /**
      * \brief Called when a user logs in.
@@ -106,13 +106,16 @@ protected:
     virtual void sendMessage(const comm::Message& message, const Client& client);
 
 private:
-    std::chrono::seconds mRemoveIdlePeriod_sec = std::chrono::seconds(30);
-    std::chrono::seconds mClientMaxIdleTimeout_sec = std::chrono::seconds(300);
+    static constexpr unsigned int MAX_UNLOGGED_CONNECTIONS = 50;
+    std::chrono::seconds mRemoveIdlePeriod_sec = std::chrono::seconds(10);
+    std::chrono::seconds mUnloggedClientMaxIdleTimeout_sec = std::chrono::seconds(30);
+    std::chrono::seconds mLoggedClientMaxIdleTimeout_sec = std::chrono::seconds(300);
     std::chrono::milliseconds mHandleMessagesPeriod_ms = std::chrono::milliseconds(5);
 
     const char* mServerName;
     volatile bool mRunning = false;
 
+    const uint16_t mPort;
     net::ServerSocket mServerSocket;
     std::vector<User> mUsers;
     std::vector<Client> mUnloggedConnections;

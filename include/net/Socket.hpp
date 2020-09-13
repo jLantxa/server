@@ -35,7 +35,7 @@ class Connection {
 public:
     Connection() = default;
     Connection(int sockfd);
-    virtual ~Connection() = default;
+    virtual ~Connection();
 
     /** \brief Send a buffer of bytes
     * \param buffer A pointer to a buffer.
@@ -51,9 +51,13 @@ public:
     */
     virtual ssize_t Read(void* buffer, std::size_t len, int flags = MSG_DONTWAIT) const;
 
-    int GetSockFd();
+    /**
+     * \brief Close the socket.
+     */
+    void Close();
 
 protected:
+    /** File descriptor for the socket */
     int m_sockfd;
 };
 
@@ -61,15 +65,28 @@ protected:
 /** \brief An exception class related to Socket errors */
 class SocketException : public std::exception {
 public:
-    SocketException(const char* msg) : m_msg(msg) { }
-    SocketException() : SocketException("Socket exception") { }
+    /** Action that caused the exception */
+    enum class Action {
+        BIND,
+        LISTEN,
+        ACCEPT,
+        CONNECT,
+    };
 
-	const char* what() const throw() {
-        return m_msg;
+    SocketException(Action action, const char* msg) : mAction(action), mMsg(msg) { }
+    SocketException(Action action) : SocketException(action, "Socket exception") { }
+
+	const char* what() const throw() override {
+        return mMsg;
+    }
+
+    Action action() const {
+        return mAction;
     }
 
 protected:
-    const char* m_msg;
+    const Action mAction;
+    const char* mMsg;
 };
 
 /** \brief Base server socket class */
@@ -87,9 +104,7 @@ public:
     };
 
     Socket(Domain domain, Type type);
-    virtual ~Socket();
-
-    void Close();
+    virtual ~Socket() = default;
 
 protected:
     int m_domain;

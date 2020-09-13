@@ -112,8 +112,7 @@ void MainWindow::on_bSend_clicked() {
     memcpy(m_buffer + typeSize + checksumSize, &size, sizeSize);
     memcpy(m_buffer + headerSize, text.c_str(), payloadSize);
 
-    const unsigned int sentBytes = m_socket->Send(m_buffer, headerSize + payloadSize);
-    printf("sent %u\n", sentBytes);
+    m_socket->Send(m_buffer, headerSize + payloadSize);
 }
 
 void MainWindow::on_bCalculate_clicked() {

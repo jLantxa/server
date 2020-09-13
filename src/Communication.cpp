@@ -58,17 +58,10 @@ Message::Message(MessageType type, uint8_t* buffer, const uint16_t size) {
     header.size = size;
     payload = buffer;
     header.checksum = calculateChecksum();
-
-    if (header.size > (size - sizeof(header))) {
-        validFlag = false;
-        Debug::Log::w(LOG_TAG, "%s(): declared message size bigger than buffer", __func__);
-    } else {
-        validFlag = true;
-    }
+    validFlag = true;
 
     Debug::Log::v(LOG_TAG, "%s(): Created message type=%u, csum=%u, size=%u",
         __func__, header.type, header.checksum, header.size);
-
 }
 
 uint8_t Message::calculateChecksum() const {
@@ -76,7 +69,7 @@ uint8_t Message::calculateChecksum() const {
     for (uint16_t i = 0; i < header.size; i++) {
         sum += payload[i];
     }
-    return 0xFF - sum;
+    return (0xFF ^ sum);
 }
 
 bool Message::isValid() const {

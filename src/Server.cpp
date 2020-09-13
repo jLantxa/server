@@ -28,8 +28,6 @@
 #include "Database.hpp"
 #include "debug.hpp"
 #include "net/Socket.hpp"
-#include "utils/CryptoUtils.hpp"
-#include "utils/TextUtils.hpp"
 
 #include "Server.hpp"
 
@@ -39,6 +37,7 @@ namespace server {
 
 Server::Server(const char* serverName, const uint16_t port)
 :   mServerName(serverName),
+    mPort(port),
     mServerSocket(net::Socket::Domain::IPv4, net::Socket::Type::STREAM, port)
 {
     Debug::Log::i(LOG_TAG, "Created server at port %d", port);
@@ -59,17 +58,39 @@ void Server::run() {
     mRunning = true;
     Debug::Log::i(LOG_TAG, "Running server");
 
-    mServerSocket.Listen();
+    try {
+        mServerSocket.Listen();
+    }
+    catch (server::net::SocketException& exception) {
+        Debug::Log::e(LOG_TAG, exception.what());
+        return;
+    }
 
     std::thread listenForConnectionsThread([&]() {
         Debug::Log::d(LOG_TAG, "Listening for new connections");
         while (mRunning) {
-            // Accept is a blocking call so no need for a sleep
-            net::Connection connection = mServerSocket.Accept();
-            Client newClient(connection);
-            mUnloggedConnections.push_back(newClient);
-            Debug::Log::i(LOG_TAG, "New unlogged connection");
-            printNumClients();
+            if (getNumUnloggedConnections() > MAX_UNLOGGED_CONNECTIONS) {
+                Debug::Log::w(LOG_TAG,
+                    "Maximum number of unlogged clients reached. "
+                    "Refusing new connections");
+                removeIdleClients();
+                std::this_thread::sleep_for(std::chrono::seconds(5));
+                continue;
+            }
+
+            try {
+                net::Connection connection = mServerSocket.Accept();
+                Client newClient(connection);
+                mUnloggedConnections.push_back(newClient);
+                Debug::Log::i(LOG_TAG, "New unlogged connection");
+                printNumClients();
+            }
+            catch (net::SocketException& exception) {
+                Debug::Log::e(LOG_TAG,
+                    "listenForConnections: Could not accept incoming connection",
+                    __func__);
+                Debug::Log::e(LOG_TAG, exception.what());
+            }
         }
     });
 
@@ -113,7 +134,7 @@ void Server::removeIdleClients() {
         std::vector<Client>& userClients = user->clients;
         for (auto client = userClients.begin(); client < userClients.end(); client++) {
             const int64_t idleTime = now - client->lastActiveTime;
-            if (idleTime >= mClientMaxIdleTimeout_sec.count()) {
+            if (idleTime >= mLoggedClientMaxIdleTimeout_sec.count()) {
                 userClients.erase(client);
                 client--;
                 Debug::Log::i(LOG_TAG,
@@ -126,7 +147,7 @@ void Server::removeIdleClients() {
 
     for (auto client = mUnloggedConnections.begin(); client != mUnloggedConnections.end(); client++) {
         const int64_t idleTime = now - client->lastActiveTime;
-        if (idleTime >= mClientMaxIdleTimeout_sec.count()) {
+        if (idleTime >= mUnloggedClientMaxIdleTimeout_sec.count()) {
             Debug::Log::i(LOG_TAG, "Unlogged client timed out (%d s)", idleTime);
             mUnloggedConnections.erase(client);
             client--;
