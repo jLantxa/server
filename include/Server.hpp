@@ -115,7 +115,6 @@ private:
     const char* mServerName;
     volatile bool mRunning = false;
 
-    const uint16_t mPort;
     net::ServerSocket mServerSocket;
     std::vector<User> mUsers;
     std::vector<Client> mUnloggedConnections;
@@ -135,11 +134,6 @@ private:
      * \return true if the user was removed, false otherwise.
      */
     bool removeUserIfUnlogged(std::vector<User>::iterator user);
-
-    /**
-     * \brief Remove users that no longer have logged clients.
-     */
-    void removeUnloggedUsers();
 
     /**
      * \brief Read incoming messages from logged and unlogged clients and handle them.

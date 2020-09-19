@@ -74,7 +74,8 @@ private:
 namespace ServerMessageTypes {
 
 enum : MessageType {
-    LOGIN = 0,
+    LOGIN  = 0,
+    LOGOUT = 1,
 };
 
 }  // namespace ServerMessageTypes

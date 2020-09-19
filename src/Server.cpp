@@ -35,9 +35,11 @@ static __attribute_used__ const char* LOG_TAG = "Server";
 
 namespace server {
 
+using comm::ServerMessageTypes::LOGIN;
+using comm::ServerMessageTypes::LOGOUT;
+
 Server::Server(const char* serverName, const uint16_t port)
 :   mServerName(serverName),
-    mPort(port),
     mServerSocket(net::Socket::Domain::IPv4, net::Socket::Type::STREAM, port)
 {
     Debug::Log::i(LOG_TAG, "Created server at port %d", port);
@@ -157,23 +159,18 @@ void Server::removeIdleClients() {
     printNumClients();
 }
 
-bool Server::handleLogin(Client& client, const comm::Message& message) {
+bool Server::handleLogin(Client& client, const comm::Message& loginMsg) {
     Debug::Log::v(LOG_TAG, "Enter %s()", __func__);
 
-    const comm::MessageType type = message.getType();
-    const uint16_t size =  message.getPayloadSize();
+    const uint16_t size =  loginMsg.getPayloadSize();
 
-    if (type != comm::ServerMessageTypes::LOGIN){
-        Debug::Log::v(LOG_TAG, "%s(): Message type %d is not LOGIN", __func__, type);
-        return false;
-    } else if (size == 0) {
+    if (size == 0) {
         Debug::Log::e(LOG_TAG, "%s(): LOGIN message has size 0", __func__);
         return false;
     }
 
-    const char* token = (const char*) message.getPayload();
+    const char* token = (const char*) loginMsg.getPayload();
     Debug::Log::d(LOG_TAG, "%s(): token = %s", __func__, token);
-
     return tryToLogin(token, client);
 }
 
@@ -193,10 +190,21 @@ void Server::pollMessages() {
         client_it->refreshTime();
         comm::Message msg(mMessageBuffer, numBytes);
         if (msg.isValid()) {
-            if (handleLogin(*client_it, msg) == true) {
-                mUnloggedConnections.erase(client_it);
-                client_it--;
-                printNumClients();
+            const comm::MessageType type = msg.getType();
+            switch (type)
+            {
+            case LOGIN:
+                Debug::Log::v(LOG_TAG, "%s(): Unlogged client message LOGIN", __func__);
+                if (handleLogin(*client_it, msg) == true) {
+                    mUnloggedConnections.erase(client_it);
+                    client_it--;
+                    printNumClients();
+                }
+                break;
+
+            default:
+                Debug::Log::v(LOG_TAG, "%s(): Unlogged client message not login", __func__);
+                break;
             }
         }
     }
@@ -211,11 +219,6 @@ void Server::pollMessages() {
                 user->clients.erase(client_it);
                 client_it--;
 
-                if (removeUserIfUnlogged(user)) {
-                    printNumClients();
-                    break;
-                }
-
                 printNumClients();
                 continue;
             }
@@ -223,8 +226,31 @@ void Server::pollMessages() {
             client_it->refreshTime();
             comm::Message msg(mMessageBuffer, numBytes);
             if (msg.isValid()) {
-                onMessageReceived(*client_it, msg);
+                const comm::MessageType type = msg.getType();
+
+                switch(type) {
+                case LOGIN:
+                    Debug::Log::v(LOG_TAG, "%s(): Logged client message LOGIN", __func__);
+                    break;
+
+                case LOGOUT:
+                    Debug::Log::v(LOG_TAG, "%s(): Logged client from user %s message LOGOUT",
+                        __func__, client_it->user->token);
+                    client_it->connection.Close();
+                    user->clients.erase(client_it);
+                    client_it--;
+                    continue;
+
+                default:
+                    onMessageReceived(*client_it, msg);
+                    continue;
+                }
             }
+        }
+
+        if (removeUserIfUnlogged(user)) {
+            printNumClients();
+            break;
         }
     }
 }
