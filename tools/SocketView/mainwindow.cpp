@@ -43,6 +43,22 @@ void MainWindow::connect() {
 }
 
 void MainWindow::disconnect() {
+    const server::comm::MessageType type = server::comm::ServerMessageTypes::LOGOUT;
+    const uint16_t size = 0;
+    const uint8_t checksum = 254;
+
+    constexpr uint8_t typeSize = sizeof(server::comm::Message::Header::type);
+    constexpr uint8_t sizeSize = sizeof(server::comm::Message::Header::size);
+    constexpr uint8_t checksumSize = sizeof(server::comm::Message::Header::checksum);
+    constexpr uint8_t headerSize = sizeof(server::comm::Message::Header);
+    const uint16_t payloadSize = 0;
+
+    memcpy(m_buffer, &type, typeSize);
+    memcpy(m_buffer + typeSize, &checksum, checksumSize);
+    memcpy(m_buffer + typeSize + checksumSize, &size, sizeSize);
+
+    m_socket->Send(m_buffer, headerSize + payloadSize);
+
     if (m_socket != nullptr) {
         m_socket->Close();
         delete m_socket;

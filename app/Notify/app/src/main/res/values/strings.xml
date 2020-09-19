@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Notify</string>
+    <string name="enable_server">Enable server</string>
+</resources>
