@@ -42,6 +42,9 @@ Server::Server(const char* serverName, const uint16_t port)
 :   mServerName(serverName),
     mServerSocket(net::Socket::Domain::IPv4, net::Socket::Type::STREAM, port)
 {
+    DatabaseManager& dbManager = DatabaseManager::getInstance();
+    dbManager.initDatabase(mDatabase);
+
     Debug::Log::i(LOG_TAG, "Created server at port %d", port);
 }
 
@@ -256,8 +259,7 @@ void Server::pollMessages() {
 }
 
 bool Server::authenticate(const char* token) {
-    const Database& database = Database::getInstance();
-    const bool success = database.authenticateUserToken(token, mServerName);
+    const bool success = mDatabase.authenticateUserToken(token, mServerName);
     if (success) {
         Debug::Log::d(LOG_TAG,
             "%s(): User %s successfully authenticated in server %s",

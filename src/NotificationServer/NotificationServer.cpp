@@ -21,10 +21,10 @@
 #include "debug.hpp"
 #include "NotificationServer/NotificationServer.hpp"
 
+using server::comm::Message;
+
 static __attribute_used__ const char* LOG_TAG = "NotificationServer";
 static const char* SERVER_NAME = "Notification";
-
-namespace server {
 
 NotificationServer::NotificationServer(const uint16_t port) : Server(SERVER_NAME, port) {
 
@@ -35,19 +35,17 @@ void NotificationServer::onLogin(Client& client) {
     (void) client;
 }
 
-void NotificationServer::onMessageReceived(Client& client, const comm::Message& message) {
+void NotificationServer::onMessageReceived(Client& client, const Message& message) {
     // TODO
     (void) client;
     (void) message;
 }
 
-}  // namespace server
-
 int main(int argc, char* argv[]) {
     // Port numbers up to 1024 are reserved
     uint16_t port = (argc <= 1)? 3000 : std::max(atoi(argv[1]), 1024 + 1);
 
-    server::NotificationServer server(port);
+    NotificationServer server(port);
     server.run();
 
     Debug::Log::i(LOG_TAG, "Server shut down");

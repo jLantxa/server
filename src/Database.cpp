@@ -27,28 +27,13 @@ static __attribute_used__ const char* LOG_TAG = "Database";
 
 namespace server {
 
-Database::Database() {
-    const int result = sqlite3_open("server.db", &mDb);
+void Database::setDb(sqlite3* db) {
+    mDb = db;
+}
 
-    if(result) {
-        Debug::Log::e(LOG_TAG, "%s(): Can't open database: %s", __func__, sqlite3_errmsg(mDb));
-        return;
-    } else {
-        Debug::Log::i(LOG_TAG, "%s(): Opened database", __func__);
-    }
-
+void Database::init() {
     createUserTable();
 }
-
-Database::~Database() {
-    sqlite3_close(mDb);
-}
-
-Database& Database::getInstance() {
-    static Database database;
-    return database;
-}
-
 
 void Database::createUserTable() {
     Debug::Log::d(LOG_TAG, "%s()", __func__);
@@ -99,6 +84,31 @@ bool Database::authenticateUserToken(const char* token, const char* serverName) 
     }
 
     return auth;
+}
+
+DatabaseManager::DatabaseManager() {
+    const int result = sqlite3_open("server.db", &mDb);
+
+    if(result) {
+        Debug::Log::e(LOG_TAG, "%s(): Can't open database: %s", __func__, sqlite3_errmsg(mDb));
+        return;
+    } else {
+        Debug::Log::i(LOG_TAG, "%s(): Opened database", __func__);
+    }
+}
+
+DatabaseManager::~DatabaseManager() {
+    sqlite3_close(mDb);
+}
+
+DatabaseManager& DatabaseManager::getInstance() {
+    static DatabaseManager instance;
+    return instance;
+}
+
+void DatabaseManager::initDatabase(Database& database) {
+    database.setDb(mDb);
+    database.init();
 }
 
 }  // namespace server

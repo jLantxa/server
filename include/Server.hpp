@@ -112,6 +112,8 @@ private:
     std::chrono::seconds mLoggedClientMaxIdleTimeout_sec = std::chrono::seconds(300);
     std::chrono::milliseconds mHandleMessagesPeriod_ms = std::chrono::milliseconds(5);
 
+    Database mDatabase;
+
     const char* mServerName;
     volatile bool mRunning = false;
 

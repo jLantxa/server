@@ -20,22 +20,18 @@
 
 #include "Server.hpp"
 
-namespace server {
-
 /**
  * \brief Notification server.
  *        This server sends scheduled notifications to registered clients.
 */
-class NotificationServer final : public Server {
+class NotificationServer final : public server::Server {
 public:
     NotificationServer(const uint16_t port);
     virtual ~NotificationServer() = default;
 
 private:
     void onLogin(Client& client) override;
-    void onMessageReceived(Client& client, const comm::Message& message) override;
+    void onMessageReceived(Client& client, const server::comm::Message& message) override;
 };
-
-}  // namespace server
 
 #endif  // _INCLUDE_NOTIFICATION_SERVER_HPP_

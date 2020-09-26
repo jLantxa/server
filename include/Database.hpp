@@ -24,15 +24,13 @@
 
 namespace server {
 
+class DatabaseManager;
+
 /**
  * \brief Base class for a database handler.
  */
 class Database {
 public:
-    virtual ~Database();
-
-    static Database& getInstance();
-
     /**
      * \brief Check if a user token exists in the user database.
      * \
@@ -43,13 +41,46 @@ public:
 protected:
     sqlite3* mDb;
 
-private:
-    Database();
+    /**
+     * \brief Initialise database.
+     */
+    virtual void init();
 
+private:
     /**
      * \brief Create table of registered users
      */
     void createUserTable();
+
+    /**
+     * \brief Set the sqlite* database.
+     * \param db Initialised sqlite*.
+     */
+    virtual void setDb(sqlite3* db);
+
+    friend DatabaseManager;
+};
+
+class DatabaseManager final {
+public:
+    ~DatabaseManager();
+
+    /**
+     * \brief Get a instance of the DatabaseManager.
+     * \return Reference to the DatabaseManager singleton.
+     **/
+    static DatabaseManager& getInstance();
+
+    /**
+     * \brief Initialise a database
+     * \param database Reference to an uninitialised database.
+     */
+    void initDatabase(Database& database);
+
+private:
+    DatabaseManager();
+
+    sqlite3* mDb;
 };
 
 }  // namespace server
