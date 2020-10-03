@@ -18,8 +18,6 @@
 #include <cstdlib>
 #include <cstdint>
 
-#include <ostream>
-
 #include <json/json.h>
 
 #include "NotificationServer/NotificationServer.hpp"
@@ -72,13 +70,7 @@ void NotificationServer::sendNotification(const Notification& notification, Clie
     root["description"] = notification.description;
     root["schedule"] = notification.schedule;
 
-    std::ostringstream stream;
-    (void) notification;
-    Json::StreamWriterBuilder builder;
-    std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
-    writer->write(root, &stream);
-
-    std::string json = stream.str();
+    std::string json = root.toStyledString();
     Debug::Log::v(LOG_TAG, "notification json = \n%s", json.c_str());
     const Message msg(RESPONSE_TASKS, (uint8_t*) json.c_str(), json.length() + 1);
     sendMessage(msg, client);

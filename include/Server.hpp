@@ -22,6 +22,7 @@
 #include <cstring>
 
 #include <chrono>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -113,12 +114,13 @@ protected:
 
     std::vector<User> mUsers;
     std::vector<Client> mUnloggedConnections;
+    std::mutex mUserMutex;
 
 private:
     static constexpr unsigned int MAX_UNLOGGED_CONNECTIONS = 50;
     std::chrono::seconds mRemoveIdlePeriod_sec = std::chrono::seconds(10);
     std::chrono::seconds mUnloggedClientMaxIdleTimeout_sec = std::chrono::seconds(30);
-    std::chrono::seconds mLoggedClientMaxIdleTimeout_sec = std::chrono::seconds(300);
+    std::chrono::seconds mLoggedClientMaxIdleTimeout_sec = std::chrono::seconds(10);
     std::chrono::milliseconds mHandleMessagesPeriod_ms = std::chrono::milliseconds(5);
 
     const bool mRequireAuthentication;
@@ -140,11 +142,9 @@ private:
     void removeIdleClients();
 
     /**
-     * \brief Removes an user if it no longer has logged clients.
-     * \param user An iterator for the user.
-     * \return true if the user was removed, false otherwise.
+     * \brief Removes users if they no longer have logged clients.
      */
-    bool removeUserIfUnlogged(std::vector<User>::iterator user);
+    void removeUnloggedUsers();
 
     /**
      * \brief Read incoming messages from logged and unlogged clients and handle them.

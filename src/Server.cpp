@@ -20,6 +20,7 @@
 #include <ctime>
 
 #include <chrono>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -78,18 +79,27 @@ void Server::run() {
         Debug::Log::d(LOG_TAG, "Listening for new connections");
         while (mRunning) {
             if (getNumUnloggedConnections() > MAX_UNLOGGED_CONNECTIONS) {
+                {
+                std::lock_guard<std::mutex> userGuard(mUserMutex);
                 Debug::Log::w(LOG_TAG,
                     "Maximum number of unlogged clients reached. "
                     "Refusing new connections");
                 removeIdleClients();
+                }
+
                 std::this_thread::sleep_for(std::chrono::seconds(5));
                 continue;
             }
 
             try {
                 net::Connection connection = mServerSocket.Accept();
+
+                {
+                std::lock_guard<std::mutex> userGuard(mUserMutex);
                 Client newClient(connection);
                 mUnloggedConnections.push_back(newClient);
+                }
+
                 Debug::Log::i(LOG_TAG, "New unlogged connection");
                 printNumClients();
             }
@@ -104,14 +114,22 @@ void Server::run() {
 
     std::thread removeIdleClientsThread([&]() {
         while (mRunning) {
+            {
+            std::lock_guard<std::mutex> userGuard(mUserMutex);
             removeIdleClients();
+            }
+
             std::this_thread::sleep_for(mRemoveIdlePeriod_sec);
         }
     });
 
     std::thread handleMessagesThread([&]() {
         while (mRunning) {
+            {
+            std::lock_guard<std::mutex> userGuard(mUserMutex);
             pollMessages();
+            }
+
             std::this_thread::sleep_for(mHandleMessagesPeriod_ms);
         }
     });
@@ -123,15 +141,14 @@ void Server::run() {
     Debug::Log::i(LOG_TAG, "Exit %s()", __func__);
 }
 
-bool Server::removeUserIfUnlogged(std::vector<User>::iterator user) {
-    if (user->clients.size() == 0) {
-        Debug::Log::i(LOG_TAG, "User %s unlogged (no clients connected)", user->token.c_str());
-        mUsers.erase(user);
-        user--;
-        return true;
+void Server::removeUnloggedUsers() {
+    for (auto user = mUsers.begin(); user != mUsers.end(); user++) {
+        if (user->clients.size() == 0) {
+            Debug::Log::i(LOG_TAG, "User %s unlogged (no clients connected)", user->token.c_str());
+            mUsers.erase(user);
+            user--;
+        }
     }
-
-    return false;
 }
 
 void Server::removeIdleClients() {
@@ -143,14 +160,12 @@ void Server::removeIdleClients() {
         for (auto client = userClients.begin(); client < userClients.end(); client++) {
             const int64_t idleTime = now - client->lastActiveTime;
             if (idleTime >= mLoggedClientMaxIdleTimeout_sec.count()) {
-                userClients.erase(client);
-                client--;
                 Debug::Log::i(LOG_TAG,
                     "Client from user %s timed out (%d s)", user->token.c_str(), idleTime);
+                userClients.erase(client);
+                client--;
             }
         }
-
-        removeUserIfUnlogged(user);
     }
 
     for (auto client = mUnloggedConnections.begin(); client != mUnloggedConnections.end(); client++) {
@@ -161,6 +176,8 @@ void Server::removeIdleClients() {
             client--;
         }
     }
+
+    removeUnloggedUsers();
 
     printNumClients();
 }
@@ -258,11 +275,6 @@ void Server::pollUsers() {
                     }
                 }
             }
-        }
-
-        if (removeUserIfUnlogged(user)) {
-            printNumClients();
-            break;
         }
     }
 }

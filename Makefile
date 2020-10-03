@@ -8,7 +8,7 @@ DOC     := doc
 CXX := clang++
 
 CXX_FLAGS := \
-	-std=c++17 \
+	-std=c++20 \
 	-Wall \
 	-Wextra \
 	-Werror \
@@ -83,7 +83,6 @@ TEST_SRC += \
 	$(TEST)/Test.cpp \
 	$(TEST)/SocketTest.cpp \
 	$(SRC)/util/TextUtils.cpp \
-	$(TEST)/ServerTest.cpp \
 	$(SRC)/Server.cpp \
 	$(SRC)/net/Socket.cpp \
 	$(SRC)/Communication.cpp \
@@ -101,4 +100,4 @@ tests:
 		-o $(BUILD)/$(TEST)/$(TEST_TARGET)
 
 run-tests:
-	./$(BUILD)/$(TEST)/$(TEST_TARGET) --gtest_filter=-ServerTest.StressServer
+	./$(BUILD)/$(TEST)/$(TEST_TARGET)

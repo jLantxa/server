@@ -1,8 +1,10 @@
 package org.jlantxa.notify.server;
 
 public class Message {
-    public static final short TYPE_LOGIN  = 0;
-    public static final short TYPE_LOGOUT = 1;
+    public static final short TYPE_LOGIN  = 0x00;
+    public static final short TYPE_LOGOUT = 0x01;
+    public static final short TYPE_REQUEST_TASKS  = 0x10;
+    public static final short TYPE_RESPONSE_TASKS = 0x11;
 
     private short mType;
     private byte mChecksum;
@@ -20,6 +22,10 @@ public class Message {
         }
 
         mChecksum = calculateChecksum();
+    }
+
+    public Message(byte[] stream, int size) {
+        // TODO
     }
 
     private byte calculateChecksum() {
