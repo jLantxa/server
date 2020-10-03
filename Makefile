@@ -62,6 +62,7 @@ NOTIFICATION_SERVER_SRC = \
 	$(SRC)/Communication.cpp \
 	$(SRC)/Database.cpp \
 	$(SRC)/net/Socket.cpp \
+	$(SRC)/NotificationServer/NotificationDatabase.cpp \
 	$(SRC)/Server.cpp \
 	$(SRC)/util/TextUtils.cpp \
 	$(SRC)/NotificationServer/NotificationServer.cpp
@@ -100,4 +101,4 @@ tests:
 		-o $(BUILD)/$(TEST)/$(TEST_TARGET)
 
 run-tests:
-	./$(BUILD)/$(TEST)/$(TEST_TARGET)
+	./$(BUILD)/$(TEST)/$(TEST_TARGET) --gtest_filter=-ServerTest.StressServer

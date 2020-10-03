@@ -18,16 +18,19 @@
 #include <cstdlib>
 #include <cstdint>
 
-#include "debug.hpp"
 #include "NotificationServer/NotificationServer.hpp"
+#include "Database.hpp"
+#include "debug.hpp"
 
 using server::comm::Message;
+using server::DatabaseManager;
 
 static __attribute_used__ const char* LOG_TAG = "NotificationServer";
 static const char* SERVER_NAME = "Notification";
 
 NotificationServer::NotificationServer(const uint16_t port) : Server(SERVER_NAME, port, true) {
-
+    DatabaseManager& dbManager = DatabaseManager::getInstance();
+    dbManager.initDatabase(mNotificationDb);
 }
 
 void NotificationServer::onLogin(Client& client) {

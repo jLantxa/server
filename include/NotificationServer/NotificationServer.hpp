@@ -18,6 +18,8 @@
 #ifndef _INCLUDE_NOTIFICATION_SERVER_NOTIFICATION_SERVER_HPP_
 #define _INCLUDE_NOTIFICATION_SERVER_NOTIFICATION_SERVER_HPP_
 
+#include "NotificationServer/NotificationDatabase.hpp"
+
 #include "Server.hpp"
 
 /**
@@ -37,6 +39,8 @@ public:
 private:
     void onLogin(Client& client) override;
     void onMessageReceived(Client& client, const server::comm::Message& message) override;
+
+    NotificationDatabase mNotificationDb;
 };
 
 #endif  // _INCLUDE_NOTIFICATION_SERVER_NOTIFICATION_SERVER_HPP_

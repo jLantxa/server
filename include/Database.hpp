@@ -20,6 +20,8 @@
 
 #include <cstdint>
 
+#include <string>
+
 #include <sqlite3.h>
 
 namespace server {
@@ -56,7 +58,7 @@ private:
      * \brief Set the sqlite* database.
      * \param db Initialised sqlite*.
      */
-    virtual void setDb(sqlite3* db);
+    void setDb(sqlite3* db);
 
     friend DatabaseManager;
 };

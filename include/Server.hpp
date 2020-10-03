@@ -104,6 +104,11 @@ protected:
      */
     virtual void onMessageReceived(Client& client, const comm::Message& message) = 0;
 
+    /**
+     * \brief Send message to a client
+     * \param message Message
+     * \param client Client
+     */
     virtual void sendMessage(const comm::Message& message, const Client& client);
 
     std::vector<User> mUsers;

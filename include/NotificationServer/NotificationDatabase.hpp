@@ -26,11 +26,13 @@
 
 class NotificationDatabase : public server::Database {
 public:
-    NotificationDatabase();
-    ~NotificationDatabase();
+    void init() override;
 
 private:
-
+    /**
+     * \brief Create table of registered users
+     */
+    void createNotificationTable();
 };
 
 #endif  // _INCLUDE_NOTIFICATION_DATABASE_HPP_
