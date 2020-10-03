@@ -76,7 +76,7 @@ bool Database::authenticateUserToken(std::string token, std::string serverName) 
     };
 
     char *zErrMsg = 0;
-    const int rc = sqlite3_exec(mDb, sql, callback, &auth, nullptr);
+    const int rc = sqlite3_exec(mDb, sql, callback, &auth, &zErrMsg);
     if (rc != SQLITE_OK) {
         Debug::Log::e(LOG_TAG, "%s():%d SQL error: %s", __func__, __LINE__, zErrMsg);
         sqlite3_free(zErrMsg);

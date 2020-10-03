@@ -31,7 +31,7 @@ public:
     NotificationServer(const uint16_t port);
     virtual ~NotificationServer() = default;
 
-    enum MessageTypes {
+    enum MessageTypes : server::comm::MessageType {
         REQUEST_TASKS  = 0x10,
         RESPONSE_TASKS = 0x11,
     };
@@ -41,6 +41,8 @@ private:
     void onMessageReceived(Client& client, const server::comm::Message& message) override;
 
     NotificationDatabase mNotificationDb;
+
+    void sendNotification(const Notification& notification, Client& client);
 };
 
 #endif  // _INCLUDE_NOTIFICATION_SERVER_NOTIFICATION_SERVER_HPP_

@@ -74,7 +74,7 @@ notification:
 	$(CXX) $(CXX_FLAGS) \
 		-I $(INCLUDE) \
 		$(NOTIFICATION_SERVER_SRC) \
-		$(LD_FLAGS) \
+		$(LD_FLAGS) -ljsoncpp \
 		$(NOTIFICATION_DEFINES) \
 		-o $(BUILD)/$(NOTIFICATION_SERVER_TARGET)
 

@@ -18,6 +18,10 @@
 #include <cstdlib>
 #include <cstdint>
 
+#include <ostream>
+
+#include <json/json.h>
+
 #include "NotificationServer/NotificationServer.hpp"
 #include "Database.hpp"
 #include "debug.hpp"
@@ -34,18 +38,23 @@ NotificationServer::NotificationServer(const uint16_t port) : Server(SERVER_NAME
 }
 
 void NotificationServer::onLogin(Client& client) {
-    // TODO
     (void) client;
+    // Do nothing
 }
 
 void NotificationServer::onMessageReceived(Client& client, const Message& message) {
-    Debug::Log::e(LOG_TAG, "Message from user %s", client.user->token.c_str());
+    Debug::Log::v(LOG_TAG, "Message from user %s", client.user->token.c_str());
 
     switch(message.getType()) {
         case REQUEST_TASKS: {
+            Debug::Log::v(LOG_TAG, "%s(): REQUEST_TASKS", __func__);
             std::vector<Notification> notifications =
                     mNotificationDb.getNotificationsFromUser(client.user->token);
-            // TODO: Create json and send notifications
+
+            for (Notification& notification : notifications) {
+                sendNotification(notification, client);
+            }
+
             break;
         }
 
@@ -53,6 +62,28 @@ void NotificationServer::onMessageReceived(Client& client, const Message& messag
             break;
     }
 }
+
+void NotificationServer::sendNotification(const Notification& notification, Client& client) {
+    Json::Value root;
+
+    root["id"] = notification.id;
+    root["active"] = notification.active? "true" : "false";
+    root["title"] = notification.title;
+    root["description"] = notification.description;
+    root["schedule"] = notification.schedule;
+
+    std::ostringstream stream;
+    (void) notification;
+    Json::StreamWriterBuilder builder;
+    std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+    writer->write(root, &stream);
+
+    std::string json = stream.str();
+    Debug::Log::v(LOG_TAG, "notification json = \n%s", json.c_str());
+    const Message msg(RESPONSE_TASKS, (uint8_t*) json.c_str(), json.length() + 1);
+    sendMessage(msg, client);
+}
+
 
 int main(int argc, char* argv[]) {
     // Port numbers up to 1024 are reserved

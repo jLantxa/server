@@ -57,11 +57,11 @@ std::vector<Notification> NotificationDatabase::getNotificationsFromUser(std::st
     std::vector<Notification> notifications;
 
     char sql[256];
-    static const char* SQL_SELECT_USER =
-        "SELECT id, active, title, description, schedule FROM Users "
+    static const char* SQL_SELECT_NOTIFICATIONS =
+        "SELECT * FROM Notifications "
         "WHERE user = '%s' AND active = '1';";
 
-    sprintf(sql, SQL_SELECT_USER, userToken.c_str());
+    sprintf(sql, SQL_SELECT_NOTIFICATIONS, userToken.c_str());
 
     const auto callback = [](void* notifications, int argc, char** argv, char** azColName) -> int {
         (void) argc;
@@ -69,10 +69,10 @@ std::vector<Notification> NotificationDatabase::getNotificationsFromUser(std::st
 
         struct Notification notification {
             atoi(argv[0]),                      // id
-            static_cast<bool>(atoi(argv[1])),   // active
-            std::string(argv[2]),               // title
-            std::string(argv[3]),               // description
-            std::string(argv[4])                // schedule
+            static_cast<bool>(atoi(argv[2])),   // active
+            std::string(argv[3]),               // title
+            std::string(argv[4]),               // description
+            std::string(argv[5])                // schedule
         };
 
         static_cast<std::vector<Notification>*>(notifications)->emplace_back(notification);
@@ -81,7 +81,7 @@ std::vector<Notification> NotificationDatabase::getNotificationsFromUser(std::st
     };
 
     char *zErrMsg = 0;
-    const int rc = sqlite3_exec(mDb, sql, callback, &notifications, nullptr);
+    const int rc = sqlite3_exec(mDb, sql, callback, &notifications, &zErrMsg);
     if (rc != SQLITE_OK) {
         Debug::Log::e(LOG_TAG, "%s():%d SQL error: %s", __func__, __LINE__, zErrMsg);
         sqlite3_free(zErrMsg);
