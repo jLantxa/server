@@ -42,11 +42,15 @@ void NotificationServer::onMessageReceived(Client& client, const Message& messag
     Debug::Log::e(LOG_TAG, "Message from user %s", client.user->token.c_str());
 
     switch(message.getType()) {
-    case REQUEST_TASKS:
-        break;
+        case REQUEST_TASKS: {
+            std::vector<Notification> notifications =
+                    mNotificationDb.getNotificationsFromUser(client.user->token);
+            // TODO: Create json and send notifications
+            break;
+        }
 
-    default:
-        break;
+        default:
+            break;
     }
 }
 

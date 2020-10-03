@@ -15,6 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <vector>
+
 #include <sqlite3.h>
 
 #include "debug.hpp"
@@ -34,7 +36,10 @@ void NotificationDatabase::createNotificationTable() {
     "CREATE TABLE IF NOT EXISTS Notifications ("
         "id INT PRIMARY KEY NOT NULL, "
         "user TEXT NOT NULL, "
-        "json BLOB NOT NULL"
+        "active INT NOT NULL, "
+        "title TEXT NOT NULL, "
+        "description TEXT, "
+        "schedule TEXT NOT NULL"
     ");";
 
     char *zErrMsg = 0;
@@ -44,4 +49,44 @@ void NotificationDatabase::createNotificationTable() {
         Debug::Log::e(LOG_TAG, "%s(): SQL error: %s", __func__, zErrMsg);
         sqlite3_free(zErrMsg);
     }
+}
+
+std::vector<Notification> NotificationDatabase::getNotificationsFromUser(std::string userToken)
+{
+    Debug::Log::d(LOG_TAG, "%s()", __func__);
+    std::vector<Notification> notifications;
+
+    char sql[256];
+    static const char* SQL_SELECT_USER =
+        "SELECT id, active, title, description, schedule FROM Users "
+        "WHERE user = '%s' AND active = '1';";
+
+    sprintf(sql, SQL_SELECT_USER, userToken.c_str());
+
+    const auto callback = [](void* notifications, int argc, char** argv, char** azColName) -> int {
+        (void) argc;
+        (void) azColName;
+
+        struct Notification notification {
+            atoi(argv[0]),                      // id
+            static_cast<bool>(atoi(argv[1])),   // active
+            std::string(argv[2]),               // title
+            std::string(argv[3]),               // description
+            std::string(argv[4])                // schedule
+        };
+
+        static_cast<std::vector<Notification>*>(notifications)->emplace_back(notification);
+
+        return 0;
+    };
+
+    char *zErrMsg = 0;
+    const int rc = sqlite3_exec(mDb, sql, callback, &notifications, nullptr);
+    if (rc != SQLITE_OK) {
+        Debug::Log::e(LOG_TAG, "%s():%d SQL error: %s", __func__, __LINE__, zErrMsg);
+        sqlite3_free(zErrMsg);
+        return notifications;
+    }
+
+    return notifications;
 }

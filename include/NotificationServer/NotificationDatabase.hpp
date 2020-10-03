@@ -15,18 +15,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _INCLUDE_NOTIFICATION_DATABASE_HPP_
-#define _INCLUDE_NOTIFICATION_DATABASE_HPP_
+#ifndef _INCLUDE_NOTIFICATION_SERVER_NOTIFICATION_DATABASE_HPP_
+#define _INCLUDE_NOTIFICATION_SERVER_NOTIFICATION_DATABASE_HPP_
 
 #include <cstdint>
+
+#include <vector>
 
 #include <sqlite3.h>
 
 #include "Database.hpp"
 
+struct Notification {
+    int64_t id;
+    bool active;
+    std::string title;
+    std::string description;
+    std::string schedule;
+};
+
 class NotificationDatabase : public server::Database {
 public:
     void init() override;
+
+    std::vector<Notification> getNotificationsFromUser(std::string userToken);
 
 private:
     /**
@@ -35,4 +47,4 @@ private:
     void createNotificationTable();
 };
 
-#endif  // _INCLUDE_NOTIFICATION_DATABASE_HPP_
+#endif  // _INCLUDE_NOTIFICATION_SERVER_NOTIFICATION_DATABASE_HPP_
