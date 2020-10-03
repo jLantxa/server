@@ -36,7 +36,7 @@ public:
      * \
      * \return true if the token is registered in the database, false otherwise.
      */
-    bool authenticateUserToken(const char* token, const char* serverName) const;
+    bool authenticateUserToken(std::string token, std::string serverName) const;
 
 protected:
     sqlite3* mDb;

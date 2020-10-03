@@ -25,9 +25,10 @@
 #include <vector>
 
 #include "Communication.hpp"
-#include "Database.hpp"
 #include "debug.hpp"
+#include "Database.hpp"
 #include "net/Socket.hpp"
+#include "util/TextUtils.hpp"
 
 #include "Server.hpp"
 
@@ -38,7 +39,7 @@ namespace server {
 using comm::ServerMessageTypes::LOGIN;
 using comm::ServerMessageTypes::LOGOUT;
 
-Server::Server(const char* serverName, const uint16_t port, bool requireAuth)
+Server::Server(std::string serverName, const uint16_t port, bool requireAuth)
 :
     mRequireAuthentication(requireAuth),
     mServerName(serverName),
@@ -57,7 +58,7 @@ int64_t Server::getCurrentTime() {
                                           .count();
 }
 
-const char* Server::getName() const {
+std::string Server::getName() const {
     return mServerName;
 }
 
@@ -124,7 +125,7 @@ void Server::run() {
 
 bool Server::removeUserIfUnlogged(std::vector<User>::iterator user) {
     if (user->clients.size() == 0) {
-        Debug::Log::i(LOG_TAG, "User %s unlogged (no clients connected)", user->token);
+        Debug::Log::i(LOG_TAG, "User %s unlogged (no clients connected)", user->token.c_str());
         mUsers.erase(user);
         user--;
         return true;
@@ -145,7 +146,7 @@ void Server::removeIdleClients() {
                 userClients.erase(client);
                 client--;
                 Debug::Log::i(LOG_TAG,
-                    "Client from user %s timed out (%d s)", user->token, idleTime);
+                    "Client from user %s timed out (%d s)", user->token.c_str(), idleTime);
             }
         }
 
@@ -174,8 +175,8 @@ bool Server::handleLogin(Client& client, const comm::Message& loginMsg) {
         return false;
     }
 
-    const char* token = (const char*) loginMsg.getPayload();
-    Debug::Log::d(LOG_TAG, "%s(): token = %s", __func__, token);
+    std::string token = std::string((const char*) loginMsg.getPayload());
+    Debug::Log::d(LOG_TAG, "%s(): token = %s", __func__, token.c_str());
     return tryToLogin(token, client);
 }
 
@@ -236,22 +237,25 @@ void Server::pollUsers() {
                 const comm::MessageType type = msg.getType();
 
                 switch(type) {
-                case LOGIN:
-                    Debug::Log::v(LOG_TAG, "%s(): Logged client (user %s) message LOGIN",
-                        __func__, client_it->user->token);
-                    break;
+                    case LOGIN: {
+                        Debug::Log::v(LOG_TAG, "%s(): Logged client (user %s) message LOGIN",
+                            __func__, client_it->user->token.c_str());
+                        break;
+                    }
 
-                case LOGOUT:
-                    Debug::Log::v(LOG_TAG, "%s(): Logged client (user %s) message LOGOUT",
-                        __func__, client_it->user->token);
-                    client_it->connection.Close();
-                    user->clients.erase(client_it);
-                    client_it--;
-                    continue;
+                    case LOGOUT: {
+                        Debug::Log::v(LOG_TAG, "%s(): Logged client (user %s) message LOGOUT",
+                            __func__, client_it->user->token.c_str());
+                        client_it->connection.Close();
+                        user->clients.erase(client_it);
+                        client_it--;
+                        continue;
+                    }
 
-                default:
-                    onMessageReceived(*client_it, msg);
-                    continue;
+                    default: {
+                        onMessageReceived(*client_it, msg);
+                        continue;
+                    }
                 }
             }
         }
@@ -268,26 +272,26 @@ void Server::pollMessages() {
     pollUnlogged();
 }
 
-bool Server::authenticate(const char* token) {
+bool Server::authenticate(std::string token) {
     const bool success = mDatabase.authenticateUserToken(token, mServerName);
     if (success) {
         Debug::Log::d(LOG_TAG,
             "%s(): User %s successfully authenticated in server %s",
-            __func__, token, mServerName);
+            __func__, token.c_str(), mServerName.c_str());
     } else {
         Debug::Log::d(LOG_TAG,
             "%s(): Could not authenticate user %s in server %s",
-            __func__, token, mServerName);
+            __func__, token.c_str(), mServerName.c_str());
     }
 
     return success;
 }
 
-bool Server::tryToLogin(const char* token, Client& client) {
-    Debug::Log::i(LOG_TAG, "Login attempt with token %s", token);
+bool Server::tryToLogin(std::string token, Client& client) {
+    Debug::Log::i(LOG_TAG, "Login attempt with token %s", token.c_str());
 
     if (mRequireAuthentication && !authenticate(token)) {
-        Debug::Log::i(LOG_TAG, "User token %s not registered in this server", token);
+        Debug::Log::i(LOG_TAG, "User token %s not registered in this server", token.c_str());
         LoginResponse failedResponse(LoginResponse::LOGIN_FAILED);
         sendMessage(failedResponse, client);
         return false;
@@ -296,25 +300,22 @@ bool Server::tryToLogin(const char* token, Client& client) {
     LoginResponse okResponse(LoginResponse::LOGIN_OK);
 
     for (auto& user : mUsers) {
-        if (0 == strcmp(user.token, token)) {
+        if (TextUtils::Equals(user.token, token)) {
             sendMessage(okResponse, client);
 
             client.user = &user;
             user.clients.emplace_back(client.connection, &user);
-            Debug::Log::i(LOG_TAG, "User %s logged in with new client", user.token);
+            Debug::Log::i(LOG_TAG, "User %s logged in with new client", user.token.c_str());
             onLogin(client);
             return true;
         }
     }
 
-    User newUser(token);
-    Client newClient(client.connection, &newUser);
-    newUser.clients.emplace_back(newClient);
-    mUsers.emplace_back(newUser);
+    mUsers.emplace_back(token, client);
 
-    Debug::Log::i(LOG_TAG, "New user %s logged in", token);
-    sendMessage(okResponse, newClient);
-    onLogin(newClient);
+    Debug::Log::i(LOG_TAG, "New user %s logged in", token.c_str());
+    sendMessage(okResponse, client);
+    onLogin(client);
     return true;
 }
 

@@ -40,11 +40,11 @@ static constexpr uint16_t BUFFER_SIZE = 1024;
  */
 class Server {
 public:
-    Server(const char* serverName, const uint16_t port, bool requireAuth = false);
+    Server(std::string serverName, const uint16_t port, bool requireAuth = false);
     virtual ~Server() = default;
 
     void run();
-    const char* getName() const;
+    std::string getName() const;
 
 protected:
     using BufferSize = uint16_t;
@@ -75,11 +75,12 @@ protected:
     };
 
     struct User final {
-        char token[256];
+        std::string token;
         std::vector<Client> clients;
 
-        User(const char* userToken) {
-            strcpy(token, userToken);
+        User(std::string userToken, Client& client) : token(userToken) {
+            client.user = this;
+            clients.emplace_back(client);
         }
     };
 
@@ -88,7 +89,7 @@ protected:
      * \param userToken User token.
      * \return true if this user token is registered in this server, false otherwise.
      */
-    virtual bool authenticate(const char* userToken);
+    virtual bool authenticate(std::string userToken);
 
     /**
      * \brief Called when a user logs in.
@@ -119,7 +120,7 @@ private:
 
     Database mDatabase;
 
-    const char* mServerName;
+    std::string mServerName;
     volatile bool mRunning = false;
 
     net::ServerSocket mServerSocket;
@@ -174,7 +175,7 @@ private:
      * \param client The client that sent the login request.
      * \return true if the token was authenticated, false otherwise.
      */
-    bool tryToLogin(const char* token, Client& client);
+    bool tryToLogin(std::string token, Client& client);
 
     /**
      * \brief Returns the current time.

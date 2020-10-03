@@ -54,7 +54,7 @@ void Database::createUserTable() {
     }
 }
 
-bool Database::authenticateUserToken(const char* token, const char* serverName) const {
+bool Database::authenticateUserToken(std::string token, std::string serverName) const {
     Debug::Log::d(LOG_TAG, "%s()", __func__);
 
     bool auth = false;
@@ -64,7 +64,7 @@ bool Database::authenticateUserToken(const char* token, const char* serverName) 
         "SELECT COUNT(*) FROM Users "
         "WHERE Token = '%s' AND %s = '1';";
 
-    sprintf(sql, SQL_SELECT_USER, token, serverName);
+    sprintf(sql, SQL_SELECT_USER, token.c_str(), serverName.c_str());
 
     const auto callback = [](void* auth, int argc, char** argv, char** azColName) -> int {
         (void) argc;

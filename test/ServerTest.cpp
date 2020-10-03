@@ -19,10 +19,12 @@
 
 #include <chrono>
 #include <deque>
+#include <string>
 #include <thread>
 
 #include "Server.hpp"
 #include "net/Socket.hpp"
+#include "util/TextUtils.hpp"
 
 class StressTestServer : public server::Server {
 public:
@@ -30,8 +32,8 @@ public:
 
     }
 
-    bool authenticate(const char* token) override {
-        return strcmp(token, "fail") != 0;
+    bool authenticate(std::string token) override {
+        return TextUtils::Equals(token, "fail") != 0;
     }
 
     void onLogin(Client& client) override {

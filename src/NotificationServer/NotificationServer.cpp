@@ -36,7 +36,7 @@ void NotificationServer::onLogin(Client& client) {
 }
 
 void NotificationServer::onMessageReceived(Client& client, const Message& message) {
-    Debug::Log::v(LOG_TAG, "Message from user %s", client.user->token);
+    Debug::Log::e(LOG_TAG, "Message from user %s", client.user->token.c_str());
 
     switch(message.getType()) {
     case REQUEST_TASKS:

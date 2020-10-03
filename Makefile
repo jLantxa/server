@@ -39,10 +39,11 @@ cloc:
 	@cloc $(INCLUDE) $(SRC) $(TEST) $(TOOLS) Makefile
 
 MESSAGE_SERVER_SRC = \
-	$(SRC)/net/Socket.cpp \
 	$(SRC)/Communication.cpp \
 	$(SRC)/Database.cpp \
+	$(SRC)/net/Socket.cpp \
 	$(SRC)/Server.cpp \
+	$(SRC)/util/TextUtils.cpp \
 	$(SRC)/MessageServer/MessageServer.cpp
 
 MESSAGE_SERVER_DEFINES := -DDEBUG_LEVEL=5
@@ -58,10 +59,11 @@ message:
 
 
 NOTIFICATION_SERVER_SRC = \
-	$(SRC)/net/Socket.cpp \
 	$(SRC)/Communication.cpp \
 	$(SRC)/Database.cpp \
+	$(SRC)/net/Socket.cpp \
 	$(SRC)/Server.cpp \
+	$(SRC)/util/TextUtils.cpp \
 	$(SRC)/NotificationServer/NotificationServer.cpp
 
 NOTIFICATION_DEFINES := -DDEBUG_LEVEL=5

@@ -28,8 +28,8 @@ MessageServer::MessageServer(const uint16_t port) : Server(SERVER_NAME, port, fa
 void MessageServer::onLogin(Client& client) {
     Message msg(
         MessageTypes::USER_LOGGED_IN,
-        (uint8_t*) client.user->token,
-        strlen(client.user->token) + 1
+        (uint8_t*) client.user->token.c_str(),
+        client.user->token.length() + 1
     );
 
     sendMsgToOthers(msg, client);
@@ -45,6 +45,7 @@ void MessageServer::onMessageReceived(Client& client, const Message& message) {
 }
 
 void MessageServer::handlePostMessage(const char* rcv_msg, Client& client) {
+    (void) rcv_msg;
 
     Message msg(MessageTypes::POST_MSG, nullptr, 0);
     sendMsgToOthers(msg, client);
