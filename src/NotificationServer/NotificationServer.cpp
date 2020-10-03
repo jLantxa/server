@@ -26,7 +26,7 @@ using server::comm::Message;
 static __attribute_used__ const char* LOG_TAG = "NotificationServer";
 static const char* SERVER_NAME = "Notification";
 
-NotificationServer::NotificationServer(const uint16_t port) : Server(SERVER_NAME, port) {
+NotificationServer::NotificationServer(const uint16_t port) : Server(SERVER_NAME, port, true) {
 
 }
 
@@ -36,9 +36,15 @@ void NotificationServer::onLogin(Client& client) {
 }
 
 void NotificationServer::onMessageReceived(Client& client, const Message& message) {
-    // TODO
-    (void) client;
-    (void) message;
+    Debug::Log::v(LOG_TAG, "Message from user %s", client.user->token);
+
+    switch(message.getType()) {
+    case REQUEST_TASKS:
+        break;
+
+    default:
+        break;
+    }
 }
 
 int main(int argc, char* argv[]) {

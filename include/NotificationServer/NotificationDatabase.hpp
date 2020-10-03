@@ -15,28 +15,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _INCLUDE_NOTIFICATION_SERVER_NOTIFICATION_SERVER_HPP_
-#define _INCLUDE_NOTIFICATION_SERVER_NOTIFICATION_SERVER_HPP_
+#ifndef _INCLUDE_NOTIFICATION_DATABASE_HPP_
+#define _INCLUDE_NOTIFICATION_DATABASE_HPP_
 
-#include "Server.hpp"
+#include <cstdint>
 
-/**
- * \brief Notification server.
- *        This server sends scheduled notifications to registered clients.
-*/
-class NotificationServer final : public server::Server {
+#include <sqlite3.h>
+
+#include "Database.hpp"
+
+class NotificationDatabase : public server::Database {
 public:
-    NotificationServer(const uint16_t port);
-    virtual ~NotificationServer() = default;
-
-    enum MessageTypes {
-        REQUEST_TASKS  = 0x10,
-        RESPONSE_TASKS = 0x11,
-    };
+    NotificationDatabase();
+    ~NotificationDatabase();
 
 private:
-    void onLogin(Client& client) override;
-    void onMessageReceived(Client& client, const server::comm::Message& message) override;
+
 };
 
-#endif  // _INCLUDE_NOTIFICATION_SERVER_NOTIFICATION_SERVER_HPP_
+#endif  // _INCLUDE_NOTIFICATION_DATABASE_HPP_

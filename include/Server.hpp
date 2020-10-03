@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-#include <Communication.hpp>
+#include "Communication.hpp"
 #include "Database.hpp"
 #include "net/Socket.hpp"
 
@@ -40,7 +40,7 @@ static constexpr uint16_t BUFFER_SIZE = 1024;
  */
 class Server {
 public:
-    Server(const char* serverName, const uint16_t port);
+    Server(const char* serverName, const uint16_t port, bool requireAuth = false);
     virtual ~Server() = default;
 
     void run();
@@ -105,6 +105,9 @@ protected:
 
     virtual void sendMessage(const comm::Message& message, const Client& client);
 
+    std::vector<User> mUsers;
+    std::vector<Client> mUnloggedConnections;
+
 private:
     static constexpr unsigned int MAX_UNLOGGED_CONNECTIONS = 50;
     std::chrono::seconds mRemoveIdlePeriod_sec = std::chrono::seconds(10);
@@ -112,14 +115,14 @@ private:
     std::chrono::seconds mLoggedClientMaxIdleTimeout_sec = std::chrono::seconds(300);
     std::chrono::milliseconds mHandleMessagesPeriod_ms = std::chrono::milliseconds(5);
 
+    const bool mRequireAuthentication;
+
     Database mDatabase;
 
     const char* mServerName;
     volatile bool mRunning = false;
 
     net::ServerSocket mServerSocket;
-    std::vector<User> mUsers;
-    std::vector<Client> mUnloggedConnections;
 
     uint8_t mMessageBuffer[BUFFER_SIZE];
 
@@ -144,6 +147,16 @@ private:
      *        Messages coming from unlogged clients are checked for login only.
      */
     void pollMessages();
+
+    /**
+     * \brief Process messages from unlogged clients
+     */
+    void pollUnlogged();
+
+    /**
+     * \brief Process messages from logged users
+     */
+    void pollUsers();
 
     /**
      * \brief Processes a received message as a login request. If the message is a

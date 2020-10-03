@@ -38,8 +38,10 @@ namespace server {
 using comm::ServerMessageTypes::LOGIN;
 using comm::ServerMessageTypes::LOGOUT;
 
-Server::Server(const char* serverName, const uint16_t port)
-:   mServerName(serverName),
+Server::Server(const char* serverName, const uint16_t port, bool requireAuth)
+:
+    mRequireAuthentication(requireAuth),
+    mServerName(serverName),
     mServerSocket(net::Socket::Domain::IPv4, net::Socket::Type::STREAM, port)
 {
     DatabaseManager& dbManager = DatabaseManager::getInstance();
@@ -177,7 +179,7 @@ bool Server::handleLogin(Client& client, const comm::Message& loginMsg) {
     return tryToLogin(token, client);
 }
 
-void Server::pollMessages() {
+void Server::pollUnlogged() {
     for (auto client_it = mUnloggedConnections.begin(); client_it != mUnloggedConnections.end(); client_it++) {
         const ssize_t numBytes = client_it->connection.Read(mMessageBuffer, BUFFER_SIZE);
         if (numBytes < 0) {
@@ -211,7 +213,9 @@ void Server::pollMessages() {
             }
         }
     }
+}
 
+void Server::pollUsers() {
     for (auto user = mUsers.begin(); user < mUsers.end(); user++) {
         for (auto client_it = user->clients.begin(); client_it != user->clients.end(); client_it++) {
             const ssize_t numBytes = client_it->connection.Read(mMessageBuffer, BUFFER_SIZE);
@@ -226,18 +230,19 @@ void Server::pollMessages() {
                 continue;
             }
 
-            client_it->refreshTime();
+            // client_it->refreshTime();
             comm::Message msg(mMessageBuffer, numBytes);
             if (msg.isValid()) {
                 const comm::MessageType type = msg.getType();
 
                 switch(type) {
                 case LOGIN:
-                    Debug::Log::v(LOG_TAG, "%s(): Logged client message LOGIN", __func__);
+                    Debug::Log::v(LOG_TAG, "%s(): Logged client (user %s) message LOGIN",
+                        __func__, client_it->user->token);
                     break;
 
                 case LOGOUT:
-                    Debug::Log::v(LOG_TAG, "%s(): Logged client from user %s message LOGOUT",
+                    Debug::Log::v(LOG_TAG, "%s(): Logged client (user %s) message LOGOUT",
                         __func__, client_it->user->token);
                     client_it->connection.Close();
                     user->clients.erase(client_it);
@@ -258,6 +263,11 @@ void Server::pollMessages() {
     }
 }
 
+void Server::pollMessages() {
+    pollUsers();
+    pollUnlogged();
+}
+
 bool Server::authenticate(const char* token) {
     const bool success = mDatabase.authenticateUserToken(token, mServerName);
     if (success) {
@@ -276,7 +286,7 @@ bool Server::authenticate(const char* token) {
 bool Server::tryToLogin(const char* token, Client& client) {
     Debug::Log::i(LOG_TAG, "Login attempt with token %s", token);
 
-    if (!authenticate(token)) {
+    if (mRequireAuthentication && !authenticate(token)) {
         Debug::Log::i(LOG_TAG, "User token %s not registered in this server", token);
         LoginResponse failedResponse(LoginResponse::LOGIN_FAILED);
         sendMessage(failedResponse, client);
@@ -285,26 +295,26 @@ bool Server::tryToLogin(const char* token, Client& client) {
 
     LoginResponse okResponse(LoginResponse::LOGIN_OK);
 
-    for (User& user : mUsers) {
+    for (auto& user : mUsers) {
         if (0 == strcmp(user.token, token)) {
             sendMessage(okResponse, client);
 
             client.user = &user;
             user.clients.emplace_back(client.connection, &user);
             Debug::Log::i(LOG_TAG, "User %s logged in with new client", user.token);
+            onLogin(client);
             return true;
         }
     }
 
     User newUser(token);
-    client.user = &newUser;
-    newUser.clients.push_back(client);
-    mUsers.push_back(newUser);
+    Client newClient(client.connection, &newUser);
+    newUser.clients.emplace_back(newClient);
+    mUsers.emplace_back(newUser);
 
     Debug::Log::i(LOG_TAG, "New user %s logged in", token);
-    sendMessage(okResponse, client);
-
-    onLogin(client);
+    sendMessage(okResponse, newClient);
+    onLogin(newClient);
     return true;
 }
 

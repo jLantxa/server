@@ -15,28 +15,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _INCLUDE_NOTIFICATION_SERVER_NOTIFICATION_SERVER_HPP_
-#define _INCLUDE_NOTIFICATION_SERVER_NOTIFICATION_SERVER_HPP_
+#ifndef _INCLUDE_MESSAGE_SERVER_MESSAGE_SERVER_HPP_
+#define _INCLUDE_MESSAGE_SERVER_MESSAGE_SERVER_HPP_
+
+#include <string>
 
 #include "Server.hpp"
 
-/**
- * \brief Notification server.
- *        This server sends scheduled notifications to registered clients.
-*/
-class NotificationServer final : public server::Server {
-public:
-    NotificationServer(const uint16_t port);
-    virtual ~NotificationServer() = default;
+using Message = server::comm::Message;
 
-    enum MessageTypes {
-        REQUEST_TASKS  = 0x10,
-        RESPONSE_TASKS = 0x11,
-    };
+enum MessageTypes : server::comm::MessageType {
+    USER_LOGGED_IN = 0x10,
+    POST_MSG = 0x11,
+};
+
+class MessageServer : public server::Server {
+public:
+    MessageServer(const uint16_t port);
 
 private:
     void onLogin(Client& client) override;
-    void onMessageReceived(Client& client, const server::comm::Message& message) override;
+    void onMessageReceived(Client& client, const Message& message) override;
+
+    void handlePostMessage(const char* rcv_msg, Client& client);
+    void sendMsgToOthers(Message& msg, Client& client);
 };
 
-#endif  // _INCLUDE_NOTIFICATION_SERVER_NOTIFICATION_SERVER_HPP_
+#endif  // _INCLUDE_MESSAGE_SERVER_MESSAGE_SERVER_HPP_

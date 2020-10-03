@@ -29,10 +29,10 @@ private slots:
     void on_cbAutoCalc_stateChanged(int checked);
     void on_tePayload_textChanged();
     void on_teMessageType_textChanged();
-
     void on_actionQuit_triggered();
-
     void on_actionlocalhost_triggered();
+    void on_bLogin_clicked();
+    void on_bLogout_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -47,5 +47,8 @@ private:
     void connect();
     void disconnect();
     void calculate();
+
+    void sendLogin();
+    void sendLogout();
 };
 #endif // MAINWINDOW_HPP

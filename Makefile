@@ -21,7 +21,7 @@ all: init doxygen
 	@make -j tests
 	@make run-tests
 
-servers: notification
+servers: message notification
 
 init:
 	@mkdir -p $(BUILD)
@@ -37,6 +37,24 @@ doxygen:
 
 cloc:
 	@cloc $(INCLUDE) $(SRC) $(TEST) $(TOOLS) Makefile
+
+MESSAGE_SERVER_SRC = \
+	$(SRC)/net/Socket.cpp \
+	$(SRC)/Communication.cpp \
+	$(SRC)/Database.cpp \
+	$(SRC)/Server.cpp \
+	$(SRC)/MessageServer/MessageServer.cpp
+
+MESSAGE_SERVER_DEFINES := -DDEBUG_LEVEL=5
+MESSAGE_SERVER_TARGET = MessageServer
+
+message:
+	$(CXX) $(CXX_FLAGS) \
+		-I $(INCLUDE) \
+		$(MESSAGE_SERVER_SRC) \
+		$(LD_FLAGS) \
+		$(MESSAGE_SERVER_DEFINES) \
+		-o $(BUILD)/$(MESSAGE_SERVER_TARGET)
 
 
 NOTIFICATION_SERVER_SRC = \

@@ -6,6 +6,10 @@
 #include <QDebug>
 #include <QString>
 
+using server::comm::Message;
+using server::comm::ServerMessageTypes::LOGIN;
+using server::comm::ServerMessageTypes::LOGOUT;
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -36,6 +40,8 @@ void MainWindow::connect() {
         ui->wMessageView->setEnabled(true);
         ui->actionConnect->setEnabled(false);
         ui->actionClose->setEnabled(true);
+        ui->bLogin->setEnabled(true);
+        ui->bLogout->setEnabled(true);
     }
     catch(server::net::SocketException& socketException) {
         qDebug() << socketException.what();
@@ -43,21 +49,7 @@ void MainWindow::connect() {
 }
 
 void MainWindow::disconnect() {
-    const server::comm::MessageType type = server::comm::ServerMessageTypes::LOGOUT;
-    const uint16_t size = 0;
-    const uint8_t checksum = 254;
-
-    constexpr uint8_t typeSize = sizeof(server::comm::Message::Header::type);
-    constexpr uint8_t sizeSize = sizeof(server::comm::Message::Header::size);
-    constexpr uint8_t checksumSize = sizeof(server::comm::Message::Header::checksum);
-    constexpr uint8_t headerSize = sizeof(server::comm::Message::Header);
-    const uint16_t payloadSize = 0;
-
-    memcpy(m_buffer, &type, typeSize);
-    memcpy(m_buffer + typeSize, &checksum, checksumSize);
-    memcpy(m_buffer + typeSize + checksumSize, &size, sizeSize);
-
-    m_socket->Send(m_buffer, headerSize + payloadSize);
+    sendLogout();
 
     if (m_socket != nullptr) {
         m_socket->Close();
@@ -70,6 +62,8 @@ void MainWindow::disconnect() {
     ui->wMessageView->setEnabled(false);
     ui->actionConnect->setEnabled(true);
     ui->actionClose->setEnabled(false);
+    ui->bLogin->setEnabled(false);
+    ui->bLogout->setEnabled(false);
 }
 
 void MainWindow::calculate() {
@@ -163,4 +157,33 @@ void MainWindow::on_actionQuit_triggered() {
 void MainWindow::on_actionlocalhost_triggered() {
     static const char* LOCALHOST = "127.0.0.1";
     ui->teAddress->setText(LOCALHOST);
+}
+
+void MainWindow::on_bLogin_clicked() {
+    sendLogin();
+}
+
+void MainWindow::on_bLogout_clicked() {
+    sendLogout();
+}
+
+void MainWindow::sendLogin() {
+    if (m_socket == nullptr) {
+        return;
+    }
+
+    const std::string userToken = ui->tePayload->toPlainText().toStdString();
+    Message logoutMsg(LOGIN, (uint8_t*) userToken.c_str(), userToken.size() + 1);
+    logoutMsg.serialize(m_buffer, logoutMsg.getLength());
+    m_socket->Send(m_buffer, logoutMsg.getLength());
+}
+
+void MainWindow::sendLogout() {
+    if (m_socket == nullptr) {
+        return;
+    }
+
+    Message logoutMsg(LOGOUT, nullptr, 0);
+    logoutMsg.serialize(m_buffer, logoutMsg.getLength());
+    m_socket->Send(m_buffer, logoutMsg.getLength());
 }
