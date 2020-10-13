@@ -37,9 +37,6 @@ static __attribute_used__ const char* LOG_TAG = "Server";
 
 namespace server {
 
-using comm::ServerMessageTypes::LOGIN;
-using comm::ServerMessageTypes::LOGOUT;
-
 Server::Server(std::string serverName, const uint16_t port, bool requireAuth)
 :
     mRequireAuthentication(requireAuth),
@@ -216,7 +213,7 @@ void Server::pollUnlogged() {
             const comm::MessageType type = msg.getType();
             switch (type)
             {
-            case LOGIN:
+            case comm::ServerMsgTypes::LOGIN:
                 Debug::Log::v(LOG_TAG, "%s(): Unlogged client message LOGIN", __func__);
                 if (handleLogin(*client_it, msg) == true) {
                     mUnloggedConnections.erase(client_it);
@@ -254,13 +251,13 @@ void Server::pollUsers() {
                 const comm::MessageType type = msg.getType();
 
                 switch(type) {
-                    case LOGIN: {
+                    case comm::ServerMsgTypes::LOGIN: {
                         Debug::Log::v(LOG_TAG, "%s(): Logged client (user %s) message LOGIN",
                             __func__, client_it->user->token.c_str());
                         break;
                     }
 
-                    case LOGOUT: {
+                    case comm::ServerMsgTypes::LOGOUT: {
                         Debug::Log::v(LOG_TAG, "%s(): Logged client (user %s) message LOGOUT",
                             __func__, client_it->user->token.c_str());
                         client_it->connection.Close();
@@ -304,16 +301,16 @@ bool Server::tryToLogin(std::string token, Client& client) {
 
     if (mRequireAuthentication && !authenticate(token)) {
         Debug::Log::i(LOG_TAG, "User token %s not registered in this server", token.c_str());
-        LoginResponse failedResponse(LoginResponse::LOGIN_FAILED);
-        sendMessage(failedResponse, client);
+        const comm::Message errMsg(comm::ServerMsgTypes::ERROR);
+        sendMessage(errMsg, client);
         return false;
     }
 
-    LoginResponse okResponse(LoginResponse::LOGIN_OK);
+    const comm::Message okMsg(comm::ServerMsgTypes::OK);
 
     for (auto& user : mUsers) {
         if (TextUtils::Equals(user.token, token)) {
-            sendMessage(okResponse, client);
+            sendMessage(okMsg, client);
 
             client.user = &user;
             user.clients.emplace_back(client.connection, &user);
@@ -326,7 +323,7 @@ bool Server::tryToLogin(std::string token, Client& client) {
     mUsers.emplace_back(token, client);
 
     Debug::Log::i(LOG_TAG, "New user %s logged in", token.c_str());
-    sendMessage(okResponse, client);
+    sendMessage(okMsg, client);
     onLogin(client);
     return true;
 }
@@ -365,11 +362,6 @@ void Server::printNumClients() const {
         numLogged,
         numUnlogged,
         mUsers.size());
-}
-
-Server::LoginResponse::LoginResponse(Response response)
-:   comm::Message(comm::ServerMessageTypes::LOGIN, (uint8_t[]) {response}, sizeof(Response))
-{
 }
 
 }  // namespace server

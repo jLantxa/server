@@ -64,6 +64,9 @@ Message::Message(MessageType type, uint8_t* buffer, const uint16_t size) {
         __func__, header.type, header.checksum, header.size);
 }
 
+Message::Message(MessageType type) : Message(type, nullptr, 0) {
+}
+
 uint8_t Message::calculateChecksum() const {
     uint8_t sum = header.type + header.size;
     for (uint16_t i = 0; i < header.size; i++) {

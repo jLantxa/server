@@ -7,8 +7,8 @@
 #include <QString>
 
 using server::comm::Message;
-using server::comm::ServerMessageTypes::LOGIN;
-using server::comm::ServerMessageTypes::LOGOUT;
+using server::comm::ServerMsgTypes::LOGIN;
+using server::comm::ServerMsgTypes::LOGOUT;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -84,7 +84,7 @@ void MainWindow::on_actionLOGIN_triggered() {
     if (m_isConnected == false) {
         return;
     } else {
-        ui->teMessageType->setText(QString::number(server::comm::ServerMessageTypes::LOGIN));
+        ui->teMessageType->setText(QString::number(server::comm::ServerMsgTypes::LOGIN));
     }
 }
 

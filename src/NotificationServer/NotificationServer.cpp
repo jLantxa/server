@@ -18,7 +18,11 @@
 #include <cstdlib>
 #include <cstdint>
 
+#ifdef OS_UBUNTU
+#include <jsoncpp/json/json.h>
+#else
 #include <json/json.h>
+#endif
 
 #include "NotificationServer/NotificationServer.hpp"
 #include "Database.hpp"

@@ -8,13 +8,20 @@ DOC     := doc
 CXX := clang++
 
 CXX_FLAGS := \
-	-std=c++20 \
+	-std=c++2a \
 	-Wall \
 	-Wextra \
 	-Werror \
 	-O3
 
 LD_FLAGS := -pthread -lsqlite3
+
+DEFINES :=
+
+ifeq ($(BUILD_OS),ubuntu)
+	DEFINES += \
+		-DOS_UBUNTU
+endif
 
 all: init doxygen
 	@make -j servers
@@ -51,6 +58,7 @@ MESSAGE_SERVER_TARGET = MessageServer
 
 message:
 	$(CXX) $(CXX_FLAGS) \
+		$(DEFINES) \
 		-I $(INCLUDE) \
 		$(MESSAGE_SERVER_SRC) \
 		$(LD_FLAGS) \
@@ -72,6 +80,7 @@ NOTIFICATION_SERVER_TARGET = NotificationServer
 
 notification:
 	$(CXX) $(CXX_FLAGS) \
+		$(DEFINES) \
 		-I $(INCLUDE) \
 		$(NOTIFICATION_SERVER_SRC) \
 		$(LD_FLAGS) -ljsoncpp \
@@ -93,6 +102,7 @@ TEST_TARGET := Test
 
 tests:
 	$(CXX) $(CXX_FLAGS) \
+		$(DEFINES) \
 		-I $(INCLUDE) \
 		$(TEST_SRC) \
 		$(LD_FLAGS) -lgtest -g3 \

@@ -202,16 +202,6 @@ private:
      * \brief Prints a log with the number of connections.
      */
     void printNumClients() const ;
-
-    class LoginResponse : public comm::Message {
-    public:
-        enum Response: uint8_t {
-            LOGIN_OK = 0,
-            LOGIN_FAILED = 1,
-        };
-
-        LoginResponse(Response response);
-    };
 };
 
 }  //namespace server

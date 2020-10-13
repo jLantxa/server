@@ -35,6 +35,7 @@ class Message {
 public:
     Message(uint8_t* buffer, const uint16_t maxSize);
     Message(MessageType type, uint8_t*  buffer, const uint16_t size);
+    Message(MessageType type);
 
     struct __attribute__((packed)) Header {
         MessageType type;
@@ -71,14 +72,21 @@ private:
     bool isCheckSumOk() const;
 };
 
-namespace ServerMessageTypes {
+
+/**
+ * \brief Reserved server messages types
+ *
+*/
+namespace ServerMsgTypes {
 
 enum : MessageType {
-    LOGIN  = 0,
-    LOGOUT = 1,
+    LOGIN  = 0x0000,
+    LOGOUT = 0x0001,
+    OK     = 0x0002,
+    ERROR  = 0x0003,
 };
 
-}  // namespace ServerMessageTypes
+}  // namespace ServerMsgTypes
 
 }  // namespace comm
 }  // namespace server
