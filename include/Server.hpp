@@ -33,7 +33,7 @@
 /** Server classes */
 namespace server {
 
-static constexpr uint16_t BUFFER_SIZE = 1024;
+static constexpr uint16_t BUFFER_SIZE = 1536;
 
 /**
  * \brief Basic server functionality like handling login requests, automatic logout of

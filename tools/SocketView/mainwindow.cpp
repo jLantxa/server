@@ -24,7 +24,8 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::connect() {
-    std::string address = ui->teAddress->text().toStdString();
+    const std::string host = ui->teAddress->text().toStdString();
+    const std::string address = ui->teAddress->text().toStdString();
     const uint16_t port = ui->tePort->text().toUInt();
 
     try {
