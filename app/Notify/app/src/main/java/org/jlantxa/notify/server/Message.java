@@ -4,24 +4,24 @@ import android.util.Log;
 
 public class Message {
     // Server reserved message types
-    public static final short TYPE_LOGIN  = 0x00;
-    public static final short TYPE_LOGOUT = 0x01;
-    public static final short TYPE_OK     = 0x02;
-    public static final short TYPE_ERROR  = 0x03;
+    public static final int TYPE_LOGIN  = 0x00;
+    public static final int TYPE_LOGOUT = 0x01;
+    public static final int TYPE_OK     = 0x02;
+    public static final int TYPE_ERROR  = 0x03;
 
     // Application message types
-    public static final short TYPE_REQUEST_TASKS  = 0x10;
+    public static final int TYPE_REQUEST_TASKS  = 0x10;
     public static final short TYPE_RESPONSE_TASKS = 0x11;
 
     public static final int HEADER_SIZE = 5;
     private static final String TAG = "Message";
 
-    private short mType;
-    private byte mChecksum;
-    private short mSize;
-    private String mPayload;
+    private int mType = 0;
+    private byte mChecksum = 0;
+    private int mSize = 0;
+    private String mPayload = "";
 
-    public Message(short type, String payload) {
+    public Message(int type, String payload) {
         mType =  type;
         mPayload = payload;
 
@@ -40,11 +40,14 @@ public class Message {
             throw new Exception("Corrupt message.");
         }
 
-        mType = (short) (stream[0] | (stream[1] << 8));
-        mChecksum = stream[2];
-        mSize = (short) (stream[3] | (stream[4] << 8));
+        mType = (stream[0] & 0xFF) | ((stream[1] << 8) & 0xFF);
+        mChecksum = (byte) (stream[2] & 0xFF);
+        mSize = (stream[3] & 0xFF) | ((stream[4] << 8) & 0xFF);
 
-        for (int i = 0; i < size; i++) {
+        Log.d(TAG, "Message from buffer: " +
+                "type=" + mType + ", checksum=" + mChecksum + ", size=" + mSize);
+
+        if (mSize > 0) {
             mPayload = new String(stream, 5, mSize);
         }
     }
@@ -61,7 +64,7 @@ public class Message {
         return (byte) (0xFF - sum);
     }
 
-    public short getType() {
+    public int getType() {
         return mType;
     }
 
@@ -69,7 +72,7 @@ public class Message {
         return mChecksum;
     }
 
-    public short getSize() {
+    public int getSize() {
         return mSize;
     }
 

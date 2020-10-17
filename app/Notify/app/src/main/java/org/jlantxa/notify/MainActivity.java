@@ -2,9 +2,11 @@ package org.jlantxa.notify;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -48,11 +50,13 @@ public class MainActivity extends AppCompatActivity
 
     private void startNotifyService() {
         final String hostName = mHostNameEditText.getText().toString();
-        final int port = Integer.parseInt(mPortEditText.getText().toString());
+        final String portString = mPortEditText.getText().toString();
+        final int port = TextUtils.equals(portString, "")? 0 : Integer.parseInt(portString);
         final String token = mUserTokenEditText.getText().toString();
 
         if (hostName.length() == 0 || port < 1024 || token.length() == 0) {
             mSwEnableServer.setChecked(false);
+            Toast.makeText(this, "Invalid configuration", Toast.LENGTH_SHORT).show();
             return;
         }
 

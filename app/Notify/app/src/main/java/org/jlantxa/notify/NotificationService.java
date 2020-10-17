@@ -33,7 +33,7 @@ public class NotificationService extends Service {
     private boolean mRunning = false;
 
     private Socket mSocket;
-    private byte[] mBuffer = new byte[1024];
+    private byte[] mBuffer = new byte[1536];
     private OutputStream mSocketOutputStream;
     private InputStream mSocketInputStream;
 
@@ -93,23 +93,15 @@ public class NotificationService extends Service {
     }
 
     private boolean login(String userToken) {
-        int read;
-        Message message;
-
-        int loginTries = 0;
         final Message loginMsg = new Message(Message.TYPE_LOGIN, userToken);
         writeMsg(loginMsg);
 
         try {
-            do {
-                read = mSocketInputStream.read(mBuffer);
-                Thread.sleep(100);
-                loginTries++;
-            } while ((loginTries < MAX_LOGIN_TRIES) && (read < 0));
-
-            message = new Message(mBuffer, read);
-            final short type =  message.getType();
+            int read = mSocketInputStream.read(mBuffer);
+            Message response = new Message(mBuffer, read);
+            final int type =  response.getType();
             if (type != Message.TYPE_OK) {
+                Log.i(TAG, "Login error");
                 return false;
             }
         } catch (Exception e) {
@@ -117,7 +109,7 @@ public class NotificationService extends Service {
             return false;
         }
 
-        Log.i(TAG, "Login successful (numTries=" + loginTries + ")");
+        Log.i(TAG, "Login successful");
         return true;
     }
 
@@ -129,6 +121,21 @@ public class NotificationService extends Service {
     private void requestTasks() {
         final Message requestMsg = new Message(Message.TYPE_REQUEST_TASKS, null);
         writeMsg(requestMsg);
+
+        int read;
+        Message message;
+        try {
+            int type = Message.TYPE_ERROR;
+            do {
+                read = mSocketInputStream.read(mBuffer);
+                message = new Message(mBuffer, read);
+                type =  message.getType();
+                Log.d(TAG, message.getPayload());
+            } while (type != Message.TYPE_OK);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -175,14 +182,17 @@ public class NotificationService extends Service {
         public void run() {
             while (mRunning) {
                 createSocket(mHostName, mPort);
-                login(mUserToken);
-                requestTasks();
-                logout();
 
+                if (login(mUserToken)) {
+                    requestTasks();
+                }
+                
                 try {
                     Thread.sleep(SERVER_SLEEP_TIME);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
+                } finally {
+                    logout();
                 }
             }
         }
