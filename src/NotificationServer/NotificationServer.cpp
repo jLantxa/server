@@ -57,6 +57,9 @@ void NotificationServer::onMessageReceived(Client& client, const Message& messag
                 sendNotification(notification, client);
             }
 
+            const server::comm::Message okMsg(server::comm::ServerMsgTypes::OK);
+            sendMessage(okMsg, client);
+
             break;
         }
 
